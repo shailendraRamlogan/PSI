@@ -3,6 +3,7 @@
 import { useRef, useMemo, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { Water } from "three/examples/jsm/objects/Water.js";
 import { Tree } from "@dgreenheck/ez-tree";
 
 /* ═══════════════════════════════════════════════
@@ -379,6 +380,328 @@ function ResortBuilding() {
    GOLDEN PULSE RING — ownership token animation
    ═══════════════════════════════════════════════ */
 
+/* ═══════════════════════════════════════════════
+   STONE FOUNTAIN — torus rim, basin, pedestal, bowl, spout
+   ═══════════════════════════════════════════════ */
+
+function StoneFountain() {
+  const stoneMat = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: 0xc8bfa8,
+        roughness: 0.85,
+        metalness: 0.05,
+      }),
+    []
+  );
+
+  // Water normals texture + Water object (client-only)
+  const fountainWaterRef = useRef<any>(null);
+
+  const waterObj = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    const waterNormals = new THREE.TextureLoader().load(
+      'https://threejs.org/examples/textures/waternormals.jpg',
+      (tex) => {
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      }
+    );
+    const waterGeometry = new THREE.CircleGeometry(3.0, 64);
+    const water = new Water(waterGeometry, {
+      textureWidth: 512,
+      textureHeight: 512,
+      waterNormals: waterNormals,
+      sunDirection: new THREE.Vector3(1, 1, 0).normalize(),
+      sunColor: 0xffa040,
+      waterColor: 0x3a8fbf,
+      distortionScale: 1.2,
+      fog: false,
+    });
+    water.rotation.x = -Math.PI / 2;
+    water.position.set(0, -3.55, 8);
+    return water;
+  }, []);
+
+  // Spray particles — 16 droplets arcing from spout
+  const sprayGeo = useMemo(() => new THREE.SphereGeometry(0.055, 6, 6), []);
+  const sprayGroupRef = useRef<THREE.Group>(null);
+  const sprayData = useRef<{
+    mesh: THREE.Mesh;
+    angle: number;
+    t: number;
+    speed: number;
+  }[]>([]);
+  const sprayInitialized = useRef(false);
+
+  // Animate water + spray
+  useFrame(() => {
+    if (waterObj) {
+      waterObj.material.uniforms['time'].value += 0.5 / 60.0;
+    }
+
+    // Initialize spray meshes on first frame
+    if (!sprayInitialized.current && sprayGroupRef.current) {
+      sprayInitialized.current = true;
+      for (let i = 0; i < 16; i++) {
+        const angle = (i / 16) * Math.PI * 2;
+        const mat = new THREE.MeshBasicMaterial({
+          color: 0x88ccff,
+          transparent: true,
+          opacity: 0.7,
+        });
+        const s = new THREE.Mesh(sprayGeo, mat);
+        const t = i / 16;
+        const speed = 0.018 + Math.random() * 0.008;
+        sprayGroupRef.current.add(s);
+        sprayData.current.push({ mesh: s, angle, t, speed });
+      }
+    }
+
+    // Animate spray arcs from spout
+    sprayData.current.forEach((s) => {
+      s.t += s.speed;
+      if (s.t > 1) s.t = 0;
+      const t = s.t;
+      const a = s.angle;
+      const arc = Math.sin(t * Math.PI);
+      s.mesh.position.set(
+        Math.cos(a) * t * 1.6,
+        arc * 1.8,
+        Math.sin(a) * t * 1.6
+      );
+      (s.mesh.material as THREE.MeshBasicMaterial).opacity = 0.75 * arc;
+    });
+  });
+
+  return (
+    <>
+      <group position={[0, 0, 8]}>
+        {/* Outer basin rim */}
+        <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, -3.5, 0]} material={stoneMat} castShadow>
+          <torusGeometry args={[3.2, 0.28, 12, 64]} />
+        </mesh>
+
+        {/* Basin floor */}
+        <mesh position={[0, -3.85, 0]} material={stoneMat} castShadow>
+          <cylinderGeometry args={[3.2, 3.4, 0.22, 64]} />
+        </mesh>
+
+        {/* Center pedestal */}
+        <mesh position={[0, -2.9, 0]} material={stoneMat} castShadow>
+          <cylinderGeometry args={[0.28, 0.42, 2.2, 16]} />
+        </mesh>
+
+        {/* Top bowl (smaller upper tier) */}
+        <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, -1.7, 0]} material={stoneMat} castShadow>
+          <torusGeometry args={[0.9, 0.18, 10, 32]} />
+        </mesh>
+
+        {/* Spout tip */}
+        <mesh position={[0, -1.3, 0]} material={stoneMat} castShadow>
+          <cylinderGeometry args={[0.06, 0.12, 0.4, 10]} />
+        </mesh>
+
+        {/* Spray particles — parented to spout tip position */}
+        <group ref={sprayGroupRef} position={[0, -1.3, 0]} />
+      </group>
+
+      {/* Three.js Water inside basin */}
+      {waterObj && <primitive object={waterObj} />}
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   CURVED ROAD — in front of fountain
+   ═══════════════════════════════════════════════ */
+
+function CurvedRoad() {
+  // ── U-shaped driveway path ──
+  const roadCurve = useMemo(
+    () =>
+      new THREE.CatmullRomCurve3([
+        new THREE.Vector3(10, -4.9, 12),
+        new THREE.Vector3(8, -4.8, 8),
+        new THREE.Vector3(6, -4.7, 2),
+        new THREE.Vector3(0, -4.65, -1),
+        new THREE.Vector3(-6, -4.7, 2),
+        new THREE.Vector3(-8, -4.8, 8),
+        new THREE.Vector3(-10, -4.9, 12),
+      ]),
+    [],
+  );
+
+  // ── Asphalt + normal canvas textures ──
+  const { asphaltTexture, normalTexture } = useMemo(() => {
+    if (typeof document === 'undefined')
+      return { asphaltTexture: null, normalTexture: null };
+
+    const size = 512;
+
+    // helper: create noise image data
+    const makeNoise = (ctx: CanvasRenderingContext2D) => {
+      const img = ctx.getImageData(0, 0, size, size);
+      const d = img.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const n = (Math.random() - 0.5) * 30;
+        d[i] = Math.min(255, Math.max(0, d[i] + n));
+        d[i + 1] = Math.min(255, Math.max(0, d[i + 1] + n));
+        d[i + 2] = Math.min(255, Math.max(0, d[i + 2] + n));
+      }
+      ctx.putImageData(img, 0, 0);
+    };
+
+    // ── asphalt canvas ──
+    const aC = document.createElement('canvas');
+    aC.width = aC.height = size;
+    const aCtx = aC.getContext('2d')!;
+    aCtx.fillStyle = '#3a3a3a';
+    aCtx.fillRect(0, 0, size, size);
+    makeNoise(aCtx);
+
+    // yellow dashed center line
+    aCtx.fillStyle = '#ffdd00';
+    const dashLen = 60;
+    const gapLen = 40;
+    const dashW = 20;
+    let x = 0;
+    while (x < size) {
+      aCtx.fillRect(x, size / 2 - dashW / 2, dashLen, dashW);
+      x += dashLen + gapLen;
+    }
+
+    // subtle white edge markings
+    aCtx.strokeStyle = 'rgba(255,255,255,0.18)';
+    aCtx.lineWidth = 3;
+    aCtx.beginPath();
+    aCtx.moveTo(0, size * 0.15);
+    aCtx.lineTo(size, size * 0.15);
+    aCtx.moveTo(0, size * 0.85);
+    aCtx.lineTo(size, size * 0.85);
+    aCtx.stroke();
+
+    const aTex = new THREE.CanvasTexture(aC);
+    aTex.wrapS = aTex.wrapT = THREE.RepeatWrapping;
+    aTex.needsUpdate = true;
+
+    // ── normal map canvas ──
+    const nC = document.createElement('canvas');
+    nC.width = nC.height = size;
+    const nCtx = nC.getContext('2d')!;
+    nCtx.fillStyle = '#8080ff';
+    nCtx.fillRect(0, 0, size, size);
+    const nImg = nCtx.getImageData(0, 0, size, size);
+    const nd = nImg.data;
+    for (let i = 0; i < nd.length; i += 4) {
+      const n = (Math.random() - 0.5) * 30;
+      nd[i] = Math.min(255, Math.max(0, nd[i] + n * 0.5));
+      nd[i + 1] = Math.min(255, Math.max(0, nd[i + 1] + n * 0.5));
+      nd[i + 2] = Math.min(255, Math.max(0, nd[i + 2] + n * 0.3));
+    }
+    nCtx.putImageData(nImg, 0, 0);
+
+    const nTex = new THREE.CanvasTexture(nC);
+    nTex.wrapS = nTex.wrapT = THREE.RepeatWrapping;
+    nTex.needsUpdate = true;
+
+    return { asphaltTexture: aTex, normalTexture: nTex };
+  }, []);
+
+  // ── Build road ribbon geometry along U-curve ──
+  const { roadGeo, dashes, uvs } = useMemo(() => {
+    const segments = 120;
+    const pts = roadCurve.getPoints(segments);
+    const positions: number[] = [];
+    const uvArr: number[] = [];
+    const indices: number[] = [];
+    const centerPts: THREE.Vector3[] = [];
+
+    for (let i = 0; i <= segments; i++) {
+      const t = i / segments;
+      const pt = pts[i];
+
+      // Width: 3 at the curve center (t≈0.5), tapering to 2 at the ends
+      const curveFactor = 1 - Math.abs(t - 0.5) * 2; // 0 at ends, 1 at center
+      const halfW = 1.0 + curveFactor * 0.5; // 1.0 → 1.5 (total 2 → 3)
+
+      const next = pts[Math.min(i + 1, segments)];
+      const prev = pts[Math.max(i - 1, 0)];
+      const dir = next.clone().sub(prev).normalize();
+      const perp = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
+
+      const left = pt.clone().addScaledVector(perp, halfW);
+      const right = pt.clone().addScaledVector(perp, -halfW);
+      left.y += 0.05;
+      right.y += 0.05;
+
+      positions.push(left.x, left.y, left.z, right.x, right.y, right.z);
+      uvArr.push(0, t, 1, t);
+
+      if (i < segments) {
+        const b = i * 2;
+        indices.push(b, b + 1, b + 2, b + 1, b + 3, b + 2);
+      }
+
+      centerPts.push(pt.clone().setY(pt.y + 0.12));
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
+    geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvArr), 2));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+
+    // Yellow dashed center line cylinders following U-curve
+    const dashes: { position: THREE.Vector3; quaternion: THREE.Quaternion }[] = [];
+    for (let i = 0; i < centerPts.length - 1; i++) {
+      if (i % 6 !== 0) continue;
+      const pt = centerPts[i];
+      const nxt = centerPts[i + 1];
+      const dir = nxt.clone().sub(pt).normalize();
+      const quat = new THREE.Quaternion();
+      quat.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+      dashes.push({ position: pt, quaternion: quat });
+    }
+
+    return { roadGeo: geo, dashes, uvs: uvArr };
+  }, [roadCurve]);
+
+  const dashGeo = useMemo(() => new THREE.CylinderGeometry(0.07, 0.07, 0.8, 6), []);
+  const dashMat = useMemo(() => new THREE.MeshBasicMaterial({ color: 0xffdd00 }), []);
+
+  // ── Asphalt Phong material ──
+  const roadMat = useMemo(
+    () =>
+      new THREE.MeshPhongMaterial({
+        map: asphaltTexture,
+        normalMap: normalTexture,
+        normalScale: new THREE.Vector2(0.3, 0.3),
+        shininess: 5,
+        color: 0x3a3a3a,
+        side: THREE.DoubleSide,
+      }),
+    [asphaltTexture, normalTexture],
+  );
+
+  return (
+    <group>
+      {/* Road surface */}
+      <mesh geometry={roadGeo} material={roadMat} receiveShadow />
+
+      {/* Yellow center dashes */}
+      {dashes.map((d, i) => (
+        <mesh
+          key={`dash-${i}`}
+          geometry={dashGeo}
+          material={dashMat}
+          position={d.position}
+          quaternion={d.quaternion}
+        />
+      ))}
+    </group>
+  );
+}
+
 function PulseRing() {
   const ringRef = useRef<THREE.Mesh>(null);
   const matRef = useRef<THREE.MeshBasicMaterial>(null);
@@ -630,6 +953,12 @@ export default function ResortBuildingCanvas() {
       <group position={[0, -1, 0]} scale={[1.8, 1.8, 1.8]}>
         <ResortBuilding />
       </group>
+
+      {/* Stone fountain in front of building */}
+      <StoneFountain />
+
+      {/* Curved road in front of fountain */}
+      <CurvedRoad />
 
       {/* Golden ownership pulse ring */}
       <PulseRing />
