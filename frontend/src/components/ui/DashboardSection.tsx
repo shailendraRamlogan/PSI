@@ -20,9 +20,9 @@ interface BalanceState {
 }
 
 const CURRENCY_CONFIG: Record<CurrencyKey, { label: string; symbol: string; gradient: string }> = {
-  BSD: { label: "Local Fiat (BSD)", symbol: "$", gradient: "from-emerald-500/10 to-cyan-500/10" },
-  USD: { label: "US Dollar (USD)", symbol: "$", gradient: "from-blue-500/10 to-indigo-500/10" },
-  USDT: { label: "Tether (USDT)", symbol: "₮", gradient: "from-violet-500/10 to-purple-500/10" },
+  BSD: { label: "Local Fiat (BSD)", symbol: "$", gradient: "bg-[#20aab6]/10" },
+  USD: { label: "US Dollar (USD)", symbol: "$", gradient: "bg-[#20aab6]/10" },
+  USDT: { label: "Tether (USDT)", symbol: "₮", gradient: "bg-[#20aab6]/10" },
 };
 
 const CURRENCY_KEYS: CurrencyKey[] = ["BSD", "USD", "USDT"];
@@ -109,7 +109,7 @@ function BalanceCard({
 
   return (
     <div
-      className={`rounded-xl bg-gradient-to-br ${config.gradient} border border-white/[0.04] p-3 sm:p-4 transition-shadow duration-600`}
+      className={`rounded-xl ${config.gradient} border border-white/[0.04] p-3 sm:p-4 transition-shadow duration-600`}
       style={{
         boxShadow: pulseColor
           ? `0 0 12px ${pulseColor}`
@@ -437,7 +437,7 @@ function DashboardMockup() {
   return (
     <div ref={mockupRef} className="relative w-full max-w-5xl mx-auto">
       {/* Ambient glow behind dashboard */}
-      <div className="absolute -inset-10 bg-gradient-to-r from-[#6c63ff]/10 via-[#3b82f6]/10 to-[#8b5cf6]/10 rounded-3xl blur-3xl" />
+      <div className="absolute -inset-10 bg-[#20aab6]/10 rounded-3xl blur-3xl" />
 
       {/* Border glow element — blooms during entry */}
       <div data-border-glow className="absolute -inset-1 rounded-2xl pointer-events-none"
@@ -470,7 +470,7 @@ function DashboardMockup() {
               className="absolute inset-0 opacity-[0.03]"
               style={{
                 background:
-                  "linear-gradient(105deg, transparent 40%, rgba(108,99,255,0.15) 45%, rgba(59,130,246,0.15) 50%, transparent 55%)",
+                  "linear-gradient(105deg, transparent 40%, rgba(32,170,182,0.15) 45%, rgba(32,170,182,0.15) 50%, transparent 55%)",
                 backgroundSize: "200% 100%",
                 animation: "shimmer 8s ease-in-out infinite",
               }}
@@ -482,7 +482,7 @@ function DashboardMockup() {
             {/* Top bar */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#6c63ff] to-[#3b82f6] flex items-center justify-center text-white text-xs font-bold">
+                <div className="w-8 h-8 rounded-lg bg-[#20aab6] flex items-center justify-center text-white text-xs font-bold">
                   P
                 </div>
                 <span className="text-white/80 font-semibold text-sm">
@@ -522,7 +522,7 @@ function DashboardMockup() {
                   key={action}
                   className={`px-3 sm:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-colors ${
                     action === "Deposit"
-                      ? "bg-gradient-to-r from-[#6c63ff] to-[#3b82f6] text-white"
+                      ? "bg-[#20aab6] text-white"
                       : "bg-white/[0.04] text-white/50 hover:text-white/70 border border-white/[0.04]"
                   }`}
                 >
@@ -683,14 +683,14 @@ export default function DashboardSection() {
   return (
     <section className="relative py-12 sm:py-16 overflow-hidden">
       {/* Section divider glow */}
-      <div ref={dividerRef} data-section-glow className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[1px] bg-gradient-to-r from-transparent via-[#3b82f6]/30 to-transparent" style={{ willChange: "transform" }} />
+      <div ref={dividerRef} data-section-glow className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[1px] bg-gradient-to-r from-transparent via-[#20aab6]/30 to-transparent" style={{ willChange: "transform" }} />
 
       {/* Ambient particles — foreground parallax (1.2x) */}
       <div ref={particlesRef} className="absolute inset-0 pointer-events-none" style={{ willChange: "transform" }}>
         {[...Array(6)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-1 h-1 rounded-full bg-[#6c63ff]/30"
+            className="absolute w-1 h-1 rounded-full bg-[#20aab6]/30"
             style={{
               left: `${15 + i * 15}%`,
               top: `${20 + (i % 3) * 25}%`,
@@ -717,7 +717,7 @@ export default function DashboardSection() {
         >
           <p
             data-eyebrow
-            className="text-xs uppercase tracking-[0.2em] text-[#3b82f6] font-medium mb-4"
+            className="text-xs uppercase tracking-[0.2em] text-[#20aab6] font-medium mb-4"
             style={{ willChange: "transform, opacity" }}
           >
             Your personalized dashboard
@@ -727,7 +727,7 @@ export default function DashboardSection() {
             className="text-2xl sm:text-3xl lg:text-4xl font-bold max-w-2xl mx-auto"
             style={{ willChange: "clip-path" }}
           >
-            <span className="bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">
+            <span className="text-white">
               Users get access to individualized dashboard tracking real time
               asset balances and transaction history.
             </span>

@@ -157,7 +157,7 @@ export default function Footer() {
         ref={topBorderGlowRef}
         className="absolute top-0 left-0 right-0 h-[1px] pointer-events-none"
         style={{
-          background: "linear-gradient(90deg, transparent 10%, rgba(108,99,255,0.15) 50%, transparent 90%)",
+          background: "linear-gradient(90deg, transparent 10%, rgba(32,170,182,0.15) 50%, transparent 90%)",
           boxShadow: "0 0 10px rgba(108,99,255,0.05)",
           willChange: "opacity",
         }}
@@ -165,7 +165,7 @@ export default function Footer() {
 
       {/* Top CTA band */}
       <div className="relative py-16 sm:py-20 overflow-hidden">
-        <div ref={ctaGlowRef} className="absolute inset-0 bg-gradient-to-b from-[#6c63ff]/[0.03] to-transparent pointer-events-none" style={{ willChange: "transform" }} />
+        <div ref={ctaGlowRef} className="absolute inset-0 bg-[#20aab6]/[0.03] pointer-events-none" style={{ willChange: "transform" }} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
@@ -175,7 +175,7 @@ export default function Footer() {
             className="text-2xl sm:text-3xl font-bold"
             layout={false}
           >
-            <span className="bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">
+            <span className="text-white">
               Ready to get started?
             </span>
           </motion.h2>
@@ -218,7 +218,7 @@ export default function Footer() {
           {/* Brand column */}
           <div data-footer-col className="col-span-2 sm:col-span-1">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#6c63ff] to-[#3b82f6] flex items-center justify-center font-bold text-white text-xs">
+              <div className="w-8 h-8 rounded-lg bg-[#20aab6] flex items-center justify-center font-bold text-white text-xs">
                 P
               </div>
               <span className="text-white font-semibold text-base tracking-wide">

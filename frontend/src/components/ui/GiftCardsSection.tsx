@@ -1027,7 +1027,7 @@ function AnimatedCarousel() {
       <div className="hidden sm:block">
         <div className="relative mx-auto overflow-hidden" style={{ width: "1040px", height: "230px" }}>
           <div className="absolute top-[-30%] left-1/2 -translate-x-1/2 w-[1100px] h-[350px] rounded-full pointer-events-none"
-            style={{ background: "radial-gradient(ellipse, rgba(108,99,255,0.08) 0%, rgba(88,70,200,0.035) 35%, transparent 60%)" }} />
+            style={{ background: "radial-gradient(ellipse, rgba(32,170,182,0.08) 0%, rgba(32,170,182,0.035) 35%, transparent 60%)" }} />
 
           <div ref={desktopTrackRef} className="absolute inset-0 flex items-center justify-center gap-6">
             {cryptoCards.map((card, i) => (
@@ -1080,7 +1080,7 @@ function AnimatedCarousel() {
           </AnimatePresence>
 
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[900px] h-[25px] rounded-full pointer-events-none"
-            style={{ background: "radial-gradient(ellipse, rgba(0,0,0,0.15) 0%, rgba(108,99,255,0.03) 50%, transparent 70%)", filter: "blur(8px)" }} />
+            style={{ background: "radial-gradient(ellipse, rgba(0,0,0,0.15) 0%, rgba(32,170,182,0.03) 50%, transparent 70%)", filter: "blur(8px)" }} />
         </div>
       </div>
 
@@ -1323,14 +1323,14 @@ export default function GiftCardsSection() {
 
   return (
     <section className="relative py-12 sm:py-16 overflow-hidden">
-      <div data-section-glow className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[1px] bg-gradient-to-r from-transparent via-amber-400/20 to-transparent" />
+      <div data-section-glow className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[1px] bg-gradient-to-r from-transparent via-[#20aab6]/20 to-transparent" />
 
       <div ref={(el) => { if (el) glowRefs.current[0] = el; }} className="absolute top-1/3 left-[10%] w-[400px] h-[400px] rounded-full bg-[#F7931A]/[0.03] blur-[100px] pointer-events-none" style={{ animation: "ambientPulse1 8s ease-in-out infinite", willChange: "opacity, transform" }} />
       <div ref={(el) => { if (el) glowRefs.current[1] = el; }} className="absolute top-1/2 right-[10%] w-[350px] h-[350px] rounded-full bg-[#627EEA]/[0.03] blur-[100px] pointer-events-none" style={{ animation: "ambientPulse2 10s ease-in-out infinite", willChange: "opacity, transform" }} />
       <div ref={(el) => { if (el) glowRefs.current[2] = el; }} className="absolute bottom-[20%] left-[40%] w-[300px] h-[300px] rounded-full bg-[#26A17B]/[0.03] blur-[80px] pointer-events-none" style={{ animation: "ambientPulse3 12s ease-in-out infinite", willChange: "opacity, transform" }} />
 
       <div ref={bloomRef} className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(ellipse, rgba(108,99,255,0.04) 0%, rgba(88,70,200,0.02) 40%, transparent 65%)", animation: "bloomDrift 15s ease-in-out infinite", willChange: "transform" }} />
+        style={{ background: "radial-gradient(ellipse, rgba(32,170,182,0.04) 0%, rgba(32,170,182,0.02) 40%, transparent 65%)", animation: "bloomDrift 15s ease-in-out infinite", willChange: "transform" }} />
       <div ref={warmBloomRef} className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] rounded-full pointer-events-none"
         style={{ background: "radial-gradient(ellipse at 50% 100%, rgba(247,147,26,0.025) 0%, rgba(199,166,40,0.015) 35%, transparent 60%)", animation: "warmDrift 12s ease-in-out infinite", willChange: "transform" }} />
 
@@ -1349,7 +1349,7 @@ export default function GiftCardsSection() {
       </div>
 
       <div className="absolute top-0 left-[5%] w-[400px] h-[100%] pointer-events-none"
-        style={{ background: "linear-gradient(170deg, rgba(108,99,255,0.02) 0%, transparent 40%)", transform: "skewX(-8deg)" }} />
+        style={{ background: "linear-gradient(170deg, rgba(32,170,182,0.02) 0%, transparent 40%)", transform: "skewX(-8deg)" }} />
 
       <div ref={sectionRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div ref={headingChoreographyRef} className="text-center mb-3 sm:mb-5 lg:mb-6">
@@ -1357,7 +1357,7 @@ export default function GiftCardsSection() {
             Crypto Payment Cards
           </p>
           <h2 data-heading className="text-2xl sm:text-3xl lg:text-4xl font-bold max-w-2xl mx-auto" style={{ willChange: "clip-path" }}>
-            <span className="bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">
+            <span className="text-white">
               Pre-loaded cryptocurrency gift cards
             </span>
           </h2>

@@ -33,7 +33,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 sm:h-18">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="relative w-9 h-9 rounded-lg bg-gradient-to-br from-[#6c63ff] to-[#3b82f6] flex items-center justify-center font-bold text-white text-sm overflow-hidden group-hover:shadow-lg group-hover:shadow-[#6c63ff]/20 transition-shadow duration-300">
+            <div className="relative w-9 h-9 rounded-lg bg-[#20aab6] flex items-center justify-center font-bold text-white text-sm overflow-hidden group-hover:shadow-lg group-hover:shadow-[#20aab6]/20 transition-shadow duration-300">
               P
             </div>
             <span className="text-white font-semibold text-lg tracking-wide">
@@ -50,7 +50,7 @@ export default function Navbar() {
                 className="text-sm text-white/60 hover:text-white transition-colors duration-200 relative group"
               >
                 {link.label}
-                <span className="absolute -bottom-1 left-0 w-0 h-[1.5px] bg-gradient-to-r from-[#6c63ff] to-[#3b82f6] group-hover:w-full transition-all duration-300" />
+                <span className="absolute -bottom-1 left-0 w-0 h-[1.5px] bg-[#20aab6] group-hover:w-full transition-all duration-300" />
               </Link>
             ))}
           </div>

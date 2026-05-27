@@ -126,7 +126,7 @@ export default function SolutionsSection() {
   return (
     <section id="solutions" ref={sectionRef} className="relative py-12 sm:py-16 overflow-hidden">
       {/* Section divider glow */}
-      <div ref={dividerRef} data-section-glow className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[1px] bg-gradient-to-r from-transparent via-[#6c63ff]/30 to-transparent" style={{ willChange: "transform" }} />
+      <div ref={dividerRef} data-section-glow className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[1px] bg-gradient-to-r from-transparent via-[#20aab6]/30 to-transparent" style={{ willChange: "transform" }} />
 
       {/* Top gradient fade */}
       <div className="absolute top-0 left-0 right-0 h-[80px] pointer-events-none"
@@ -140,7 +140,7 @@ export default function SolutionsSection() {
         >
           <p
             data-eyebrow
-            className="text-xs uppercase tracking-[0.2em] text-[#6c63ff] font-medium mb-4"
+            className="text-xs uppercase tracking-[0.2em] text-[#20aab6] font-medium mb-4"
             style={{ willChange: "transform, opacity" }}
           >
             Solutions for every industry
@@ -150,7 +150,7 @@ export default function SolutionsSection() {
             className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight max-w-3xl mx-auto"
             style={{ willChange: "clip-path" }}
           >
-            <span className="bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">
+            <span className="text-white">
               On-ramp, off-ramp liquidity for global solutions in fiat and
               stablecoins.
             </span>

@@ -52,7 +52,7 @@ function FloatingPanel({ panel }: { panel: PanelDef }) {
         layout={false}
       >
         <div className="flex items-center gap-1.5 mb-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#6c63ff]/60" style={{ animation: "beaconPulse 2s ease-in-out infinite" }} />
+          <div className="w-1.5 h-1.5 rounded-full bg-[#20aab6]/60" style={{ animation: "beaconPulse 2s ease-in-out infinite" }} />
           <span className="text-[7px] text-white/25 uppercase tracking-[0.15em] font-semibold">{panel.title}</span>
         </div>
         {panel.content}
@@ -78,7 +78,7 @@ const panels: PanelDef[] = [
       <div>
         <div className="flex items-center gap-1.5">
           <span className="text-[11px] font-bold text-white/60">USD</span>
-          <svg className="w-2.5 h-2.5 text-[#6c63ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+          <svg className="w-2.5 h-2.5 text-[#20aab6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
           <span className="text-[11px] font-bold text-white/60">USDT</span>
         </div>
         <p className="text-xs font-bold text-white/85 mt-0.5">$12,450.00</p>
@@ -127,7 +127,7 @@ const panels: PanelDef[] = [
       <div>
         <p className="text-[10px] font-bold text-white/60">USDC Pool</p>
         <p className="text-xs font-bold text-white/85">$8.2M</p>
-        <p className="text-[8px] text-[#6c63ff]/70 font-medium">APY 4.8%</p>
+        <p className="text-[8px] text-[#20aab6]/70 font-medium">APY 4.8%</p>
       </div>
     ),
   },
@@ -278,7 +278,7 @@ export default function HeroSection() {
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute bottom-0 left-0 right-0 h-[60%] opacity-[0.03]"
           style={{
-            backgroundImage: "linear-gradient(rgba(108,99,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(108,99,255,0.3) 1px, transparent 1px)",
+            backgroundImage: "linear-gradient(rgba(32,170,182,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(32,170,182,0.3) 1px, transparent 1px)",
             backgroundSize: "60px 60px", transform: "perspective(500px) rotateX(60deg)", transformOrigin: "bottom center",
             animation: "gridScroll 20s linear infinite",
           }} />
@@ -287,17 +287,17 @@ export default function HeroSection() {
       {/* Gradient lighting */}
       <div className="absolute inset-0 z-[1] pointer-events-none">
         <div ref={(el) => setGradientRef(el, 0)} data-section-glow className="absolute w-[800px] h-[800px] rounded-full blur-[150px]"
-          style={{ background: "radial-gradient(circle, rgba(108,99,255,0.08) 0%, transparent 70%)", top: "5%", left: "15%", animation: "ambientPulse1 8s ease-in-out infinite", willChange: "transform", backfaceVisibility: "hidden" }} />
+          style={{ background: "radial-gradient(circle, rgba(32,170,182,0.08) 0%, transparent 70%)", top: "5%", left: "15%", animation: "ambientPulse1 8s ease-in-out infinite", willChange: "transform", backfaceVisibility: "hidden" }} />
         <div ref={(el) => setGradientRef(el, 1)} data-section-glow className="absolute w-[600px] h-[600px] rounded-full blur-[120px]"
-          style={{ background: "radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%)", top: "20%", right: "10%", animation: "ambientPulse2 10s ease-in-out infinite", willChange: "transform", backfaceVisibility: "hidden" }} />
+          style={{ background: "radial-gradient(circle, rgba(32,170,182,0.06) 0%, transparent 70%)", top: "20%", right: "10%", animation: "ambientPulse2 10s ease-in-out infinite", willChange: "transform", backfaceVisibility: "hidden" }} />
         <div ref={(el) => setGradientRef(el, 2)} data-section-glow className="absolute w-[500px] h-[500px] rounded-full blur-[100px]"
-          style={{ background: "radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)", bottom: "10%", left: "35%", animation: "ambientPulse3 12s ease-in-out infinite", willChange: "transform", backfaceVisibility: "hidden" }} />
+          style={{ background: "radial-gradient(circle, rgba(32,170,182,0.05) 0%, transparent 70%)", bottom: "10%", left: "35%", animation: "ambientPulse3 12s ease-in-out infinite", willChange: "transform", backfaceVisibility: "hidden" }} />
       </div>
 
       {/* Light streaks */}
       <div className="absolute inset-0 z-[1] overflow-hidden pointer-events-none">
-        <div className="absolute w-[200%] h-[1px] opacity-[0.06]" style={{ background: "linear-gradient(90deg, transparent, #6c63ff, transparent)", top: "30%", animation: "streakMove1 12s ease-in-out infinite" }} />
-        <div className="absolute w-[200%] h-[1px] opacity-[0.04]" style={{ background: "linear-gradient(90deg, transparent, #3b82f6, transparent)", top: "55%", animation: "streakMove2 16s ease-in-out infinite" }} />
+        <div className="absolute w-[200%] h-[1px] opacity-[0.06]" style={{ background: "linear-gradient(90deg, transparent, #20aab6, transparent)", top: "30%", animation: "streakMove1 12s ease-in-out infinite" }} />
+        <div className="absolute w-[200%] h-[1px] opacity-[0.04]" style={{ background: "linear-gradient(90deg, transparent, #20aab6, transparent)", top: "55%", animation: "streakMove2 16s ease-in-out infinite" }} />
       </div>
 
       {/* 3D Canvas — globe */}
@@ -327,11 +327,11 @@ export default function HeroSection() {
           </motion.div>
 
           <motion.h1 custom={1} variants={fadeInUp} initial="hidden" animate="visible"
-            className="text-[2.5rem] sm:text-[3.5rem] lg:text-[4.5rem] font-bold leading-[0.95] tracking-tight" layout={false}>
-            <span className="bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">Your payment</span>
+            className="text-[2.5rem] sm:text-[3.5rem] lg:text-[4.5rem] font-bold leading-[1.15] tracking-tight" layout={false}>
+            <span className="text-white">Your payment</span>
             <br />
-            <span className="bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">solutions </span>
-            <span className="bg-gradient-to-r from-[#6c63ff] via-[#5b8def] to-[#06b6d4] bg-clip-text text-transparent">begin here.</span>
+            <span className="text-white">solutions </span>
+            <span className="text-[#20aab6]">begin here.</span>
           </motion.h1>
 
           <motion.p custom={2} variants={fadeInUp} initial="hidden" animate="visible"
@@ -343,9 +343,9 @@ export default function HeroSection() {
             <Link href="/get-started">
               <motion.button whileHover={{ scale: 1.04, y: -1 }} whileTap={{ scale: 0.97 }}
                 className="relative overflow-hidden px-6 py-2.5 rounded-full text-[13px] font-semibold text-white flex items-center gap-2 group
-                  bg-gradient-to-r from-[#6c63ff]/80 to-[#3b82f6]/80
-                  shadow-[0_0_20px_rgba(108,99,255,0.25),0_0_60px_rgba(108,99,255,0.1)]
-                  hover:shadow-[0_0_30px_rgba(108,99,255,0.35),0_0_80px_rgba(108,99,255,0.15)]
+                  bg-[#20aab6]
+                  shadow-[0_0_20px_rgba(32,170,182,0.25),0_0_60px_rgba(32,170,182,0.1)]
+                  hover:shadow-[0_0_30px_rgba(32,170,182,0.35),0_0_80px_rgba(32,170,182,0.15)]
                   transition-shadow duration-500" layout={false}>
                 <span className="absolute inset-0 rounded-full bg-white/[0.08] backdrop-blur-sm border border-white/[0.1]" />
                 <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12" />
@@ -371,7 +371,7 @@ export default function HeroSection() {
               { value: "99.9%", label: "Uptime" },
             ].map((stat) => (
               <div key={stat.label} className="group cursor-default">
-                <div className="text-lg sm:text-xl font-bold bg-gradient-to-r from-white to-white/55 bg-clip-text text-transparent group-hover:from-[#6c63ff] group-hover:to-[#06b6d4] transition-all duration-500">{stat.value}</div>
+                <div className="text-lg sm:text-xl font-bold text-white group-hover:text-[#20aab6] transition-all duration-500">{stat.value}</div>
                 <div className="text-[9px] text-white/20 mt-0.5 tracking-wider uppercase font-medium">{stat.label}</div>
               </div>
             ))}

@@ -31,7 +31,7 @@ function FloatingParticle({ delay, x, size, color = "rgba(108,99,255,0.5)" }: { 
 
 /* ─── Investment Overlay Panel (with hover) ─── */
 function InvestmentOverlay({
-  label, value, sublabel, className, delay, accentColor = "#6c63ff", icon,
+  label, value, sublabel, className, delay, accentColor = "#20aab6", icon,
 }: {
   label: string; value: string; sublabel?: string; className?: string;
   delay: number; accentColor?: string; icon?: React.ReactNode;
@@ -73,7 +73,7 @@ function InvestmentOverlay({
 }
 
 /* ─── Mini Chart ─── */
-function MiniChart({ className, delay, color = "#6c63ff", label = "Growth" }: { className?: string; delay: number; color?: string; label?: string }) {
+function MiniChart({ className, delay, color = "#20aab6", label = "Growth" }: { className?: string; delay: number; color?: string; label?: string }) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -223,7 +223,7 @@ function ResortScene() {
 
       {/* ═══ Investment Overlays ═══ */}
       <InvestmentOverlay label="Total Value" value="$45M" sublabel="Caribbean Development"
-        className="top-2 right-2 sm:top-4 sm:right-5" delay={0.5} accentColor="#6c63ff"
+        className="top-2 right-2 sm:top-4 sm:right-5" delay={0.5} accentColor="#20aab6"
         icon={<svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" /></svg>} />
       <InvestmentOverlay label="Min. Investment" value="$500" sublabel="Per share"
         className="bottom-3 left-2 sm:bottom-5 sm:left-5" delay={0.7} accentColor="#06b6d4" />
@@ -233,7 +233,7 @@ function ResortScene() {
       <InvestmentOverlay label="Investors" value="1,247" sublabel="Active"
         className="bottom-3 right-2 sm:bottom-5 sm:right-5" delay={0.8} accentColor="#f7931a" />
       <InvestmentOverlay label="Ownership" value="0.05%" sublabel="Per $500"
-        className="hidden lg:block top-[42%] right-2 sm:right-5" delay={1.0} accentColor="#8b5cf6" />
+        className="hidden lg:block top-[42%] right-2 sm:right-5" delay={1.0} accentColor="#20aab6" />
       <InvestmentOverlay label="Proj. Returns" value="$92,500" sublabel="5yr on $500"
         className="hidden md:block top-[42%] left-2 sm:left-5" delay={1.2} accentColor="#a78bfa" />
 
@@ -247,8 +247,8 @@ function ResortScene() {
       </motion.div>
 
       {/* Mini charts */}
-      <MiniChart className="bottom-20 sm:bottom-28 right-8 sm:right-12" delay={0.9} color="#6c63ff" label="Growth" />
-      <MiniChart className="top-20 sm:top-24 left-[28%]" delay={1.3} color="#3b82f6" label="Yield" />
+      <MiniChart className="bottom-20 sm:bottom-28 right-8 sm:right-12" delay={0.9} color="#20aab6" label="Growth" />
+      <MiniChart className="top-20 sm:top-24 left-[28%]" delay={1.3} color="#20aab6" label="Yield" />
 
       {/* Cinematic overlays */}
       <div className="absolute inset-x-0 top-0 h-12 sm:h-20 bg-gradient-to-b from-[#07080f]/70 to-transparent z-20 pointer-events-none" />
@@ -440,11 +440,11 @@ export default function TokenizationSection() {
   return (
     <section ref={sectionRef} className="relative py-12 sm:py-16 overflow-hidden">
       {/* Divider */}
-      <div data-section-glow className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[1px] bg-gradient-to-r from-transparent via-cyan-400/12 to-transparent" />
+      <div data-section-glow className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[1px] bg-gradient-to-r from-transparent via-[#20aab6]/12 to-transparent" />
 
       {/* Ambient bg orbs — parallax at 0.3x */}
       <div ref={bgOrbsRef} className="pointer-events-none" style={{ willChange: "transform" }}>
-        <div className="absolute top-1/3 left-[5%] w-[400px] h-[400px] rounded-full bg-[#6c63ff]/[0.015] blur-[100px]" />
+        <div className="absolute top-1/3 left-[5%] w-[400px] h-[400px] rounded-full bg-[#20aab6]/[0.015] blur-[100px]" />
         <div className="absolute bottom-1/3 right-[5%] w-[350px] h-[350px] rounded-full bg-[#06b6d4]/[0.012] blur-[80px]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[250px] rounded-full bg-[#e8a045]/[0.008] blur-[60px]" />
       </div>
@@ -457,7 +457,7 @@ export default function TokenizationSection() {
             <span className="text-[9px] text-white/25 uppercase tracking-[0.15em] font-semibold">Coming Soon</span>
           </div>
           <h2 data-heading className="text-[1.75rem] sm:text-[2.25rem] lg:text-[2.75rem] font-bold leading-tight" style={{ willChange: "clip-path" }}>
-            <span className="bg-gradient-to-r from-white via-white to-white/50 bg-clip-text text-transparent">Tokenization Projects</span>
+            <span className="text-white">Tokenization Projects</span>
           </h2>
           <p data-subtitle className="mt-2 text-[11px] sm:text-xs text-white/20 max-w-sm mx-auto leading-relaxed" style={{ willChange: "transform, opacity" }}>
             Institutional-grade fractional ownership of premium real estate
@@ -470,8 +470,8 @@ export default function TokenizationSection() {
           <ResortScene />
           <div className="absolute inset-0 rounded-2xl border border-white/[0.05] pointer-events-none z-40" />
           {/* Ambient glow behind scene */}
-          <div className="absolute -inset-4 rounded-3xl bg-gradient-to-b from-[#6c63ff]/[0.02] via-transparent to-transparent blur-xl pointer-events-none -z-10" />
-          <div className="absolute -inset-4 rounded-3xl bg-gradient-to-t from-[#e8a045]/[0.015] via-transparent to-transparent blur-xl pointer-events-none -z-10" />
+          <div className="absolute -inset-4 rounded-3xl bg-[#20aab6]/[0.02] blur-xl pointer-events-none -z-10" />
+          <div className="absolute -inset-4 rounded-3xl bg-[#20aab6]/[0.015] blur-xl pointer-events-none -z-10" />
         </motion.div>
 
         {/* ═══ Caption — tighter ═══ */}
@@ -487,11 +487,11 @@ export default function TokenizationSection() {
           {/* Feature badges */}
           <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 mt-4">
             {[
-              { label: "Fractional Shares", color: "#6c63ff" },
+              { label: "Fractional Shares", color: "#20aab6" },
               { label: "From $500", color: "#06b6d4" },
               { label: "18.5% APY", color: "#10b981" },
               { label: "SEC Compliant", color: "#f7931a" },
-              { label: "Audited", color: "#8b5cf6" },
+              { label: "Audited", color: "#20aab6" },
             ].map((b) => (
               <div key={b.label} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.025] border border-white/[0.04]">
                 <div className="w-1 h-1 rounded-full" style={{ backgroundColor: b.color, opacity: 0.5 }} />

@@ -79,7 +79,7 @@ function FaqItem({
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className={`flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${
               isOpen
-                ? "bg-gradient-to-br from-[#6c63ff] to-[#3b82f6]"
+                ? "bg-[#20aab6]"
                 : "bg-white/[0.04] group-hover:bg-white/[0.08]"
             }`}
           >
@@ -209,7 +209,7 @@ export default function FaqSection() {
   return (
     <section className="relative py-24 sm:py-32 overflow-hidden">
       {/* Divider */}
-      <div ref={dividerRef} data-section-glow className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[1px] bg-gradient-to-r from-transparent via-[#6c63ff]/20 to-transparent" style={{ willChange: "transform" }} />
+      <div ref={dividerRef} data-section-glow className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[1px] bg-gradient-to-r from-transparent via-[#20aab6]/20 to-transparent" style={{ willChange: "transform" }} />
 
       <div ref={sectionRef} className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Heading — clip-path choreography */}
@@ -219,7 +219,7 @@ export default function FaqSection() {
         >
           <p
             data-eyebrow
-            className="text-xs uppercase tracking-[0.2em] text-[#6c63ff]/80 font-medium mb-4"
+            className="text-xs uppercase tracking-[0.2em] text-[#20aab6]/80 font-medium mb-4"
             style={{ willChange: "transform, opacity" }}
           >
             Frequently asked questions
@@ -229,7 +229,7 @@ export default function FaqSection() {
             className="text-2xl sm:text-3xl lg:text-4xl font-bold"
             style={{ willChange: "clip-path" }}
           >
-            <span className="bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">
+            <span className="text-white">
               Everything you need to know
             </span>
           </h2>
@@ -241,7 +241,7 @@ export default function FaqSection() {
             ref={glowLineRef}
             className="h-[2px] w-full max-w-xs rounded-full"
             style={{
-              background: "linear-gradient(90deg, transparent, rgba(108,99,255,0.2), transparent)",
+              background: "linear-gradient(90deg, transparent, rgba(32,170,182,0.2), transparent)",
               willChange: "transform",
             }}
           />
