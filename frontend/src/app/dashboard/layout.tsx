@@ -54,25 +54,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   // Show expired modal only when flag is set AND session is actually invalid
   const showExpired = sessionExpired && sessionValid === false;
 
+  // Redirect unauthenticated users to login
   useEffect(() => {
     if (!loading && !user && !sessionExpired) {
       router.replace("/login");
     }
   }, [user, loading, sessionExpired, router]);
-
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-surface-0">
-        <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-  if (!user && !sessionExpired) return null;
-
-  const handleExpiredLogin = () => {
-    dismissSessionExpired();
-    router.replace("/login");
-  };
 
   // Auto-redirect to login 3 seconds after session expires
   useEffect(() => {
@@ -84,7 +71,23 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     return () => clearTimeout(timer);
   }, [showExpired, dismissSessionExpired, router]);
 
+  const handleExpiredLogin = () => {
+    dismissSessionExpired();
+    router.replace("/login");
+  };
+
   const pageTitle = pageTitles[pathname] || "Dashboard";
+
+  // ── Conditional renders (no hooks below this line) ──
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-surface-0">
+        <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  if (!user && !sessionExpired) return null;
 
   return (
     <div className="flex h-screen bg-surface-0 text-white antialiased overflow-hidden">
