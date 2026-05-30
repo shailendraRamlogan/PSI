@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AuthProvider } from "@/lib/auth-store";
 
 export const metadata: Metadata = {
   title: "PSI — Payment Solutions International",
@@ -14,7 +15,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="bg-[#07080F] text-white antialiased">{children}</body>
+      <body className="bg-[#07080F] text-white antialiased">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

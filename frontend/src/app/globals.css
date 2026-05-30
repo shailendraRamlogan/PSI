@@ -1,15 +1,66 @@
 @import "tailwindcss";
 
-:root {
-  --color-bg: #07080f;
-  --color-surface: #0d0f1a;
-  --color-border: rgba(255, 255, 255, 0.06);
+/* ═══ Tailwind v4 Theme — Semantic Design Tokens ═══ */
+@theme {
+  /* Brand */
   --color-accent: #20aab6;
-  --color-accent-blue: #20aab6;
-  --color-accent-purple: #20aab6;
+  --color-accent-hover: #1d99a3;
+
+  /* Surfaces */
+  --color-surface-0: #07080f;
+  --color-surface-1: #0a0b14;
+  --color-surface-2: #0d0f1a;
+
+  /* Borders (white-opacity system) */
+  --color-border-subtle: rgba(255, 255, 255, 0.04);
+  --color-border-default: rgba(255, 255, 255, 0.06);
+  --color-border-medium: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.10);
+  --color-border-accent: rgba(32, 170, 182, 0.20);
+  --color-border-accent-hover: rgba(32, 170, 182, 0.40);
+  --color-border-accent-focus: rgba(32, 170, 182, 0.50);
+
+  /* Text */
+  --color-text-primary: rgba(255, 255, 255, 1);
+  --color-text-secondary: rgba(255, 255, 255, 0.70);
+  --color-text-muted: rgba(255, 255, 255, 0.50);
+  --color-text-dim: rgba(255, 255, 255, 0.40);
+  --color-text-faint: rgba(255, 255, 255, 0.30);
+  --color-text-ghost: rgba(255, 255, 255, 0.25);
+  --color-text-phantom: rgba(255, 255, 255, 0.20);
+  --color-text-void: rgba(255, 255, 255, 0.15);
+
+  /* Fill (backgrounds over dark) */
+  --color-fill-ghost: rgba(255, 255, 255, 0.02);
+  --color-fill-faint: rgba(255, 255, 255, 0.04);
+  --color-fill-subtle: rgba(255, 255, 255, 0.06);
+  --color-fill-light: rgba(255, 255, 255, 0.07);
+  --color-fill-medium: rgba(255, 255, 255, 0.08);
+
+  /* Accent fills */
+  --color-accent-fill: rgba(32, 170, 182, 0.10);
+  --color-accent-fill-hover: rgba(32, 170, 182, 0.08);
+  --color-accent-fill-ghost: rgba(32, 170, 182, 0.05);
+
+  /* Semantic status */
+  --color-success: #34d399;
+  --color-success-fill: rgba(52, 211, 153, 0.10);
+  --color-warning: #fbbf24;
+  --color-warning-fill: rgba(251, 191, 36, 0.10);
+  --color-error: #f87171;
+  --color-error-fill: rgba(248, 113, 113, 0.10);
+
+  /* Shadows */
+  --shadow-accent: 0 0 20px rgba(32, 170, 182, 0.25);
+  --shadow-accent-lg: 0 0 30px rgba(32, 170, 182, 0.35);
+  --shadow-accent-glow: 0 8px 30px rgba(32, 170, 182, 0.3);
+}
+
+:root {
+  --color-bg: var(--color-surface-0);
   --color-glow: rgba(32, 170, 182, 0.4);
   --color-text: #ffffff;
-  --color-text-muted: rgba(255, 255, 255, 0.55);
+  --color-text-muted: var(--color-text-muted);
 }
 
 * {
@@ -134,4 +185,42 @@ section[class] {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+.testimonial-card:hover {
+  background: rgba(255,255,255,0.07) !important;
+  border-color: rgba(32,170,182,0.35) !important;
+}
+
+.compliance-card:hover {
+  border-color: rgba(32,170,182,0.3) !important;
+}
+
+@keyframes scrollLeft {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-scroll-left {
+  animation: scrollLeft 30s linear infinite;
+}
+
+@keyframes ambientPulse1 {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.08); opacity: 0.8; }
+}
+
+@keyframes ambientPulse2 {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.12); opacity: 0.9; }
+}
+
+@keyframes ambientPulse3 {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.06); opacity: 0.7; }
+}
+
+@keyframes ctaShift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
 }
