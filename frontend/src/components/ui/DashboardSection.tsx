@@ -725,7 +725,7 @@ export default function DashboardSection() {
   }, []);
 
   return (
-    <section className="relative py-12 sm:py-16 overflow-hidden">
+    <section className="relative py-12 sm:py-16 overflow-hidden bg-[#f8f9fb]">
       {/* Section divider glow */}
       <div ref={dividerRef} data-section-glow className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[1px] bg-gradient-to-r from-transparent via-[#20aab6]/30 to-transparent" style={{ willChange: "transform" }} />
 
@@ -771,7 +771,7 @@ export default function DashboardSection() {
             className="text-2xl sm:text-3xl lg:text-4xl font-bold max-w-2xl mx-auto"
             style={{ willChange: "clip-path" }}
           >
-            <span className="text-white">
+            <span className="text-[#1a1a2e]">
               Users get access to individualized dashboard tracking real time
               asset balances and transaction history.
             </span>
@@ -785,7 +785,7 @@ export default function DashboardSection() {
       </div>
 
       {/* Bottom gradient fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#07080f] to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#f8f9fb] to-transparent pointer-events-none" />
 
       {/* Shimmer keyframes */}
       <style jsx global>{`

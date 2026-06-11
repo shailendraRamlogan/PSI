@@ -361,7 +361,7 @@ export default function TokenizationSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="relative py-12 sm:py-16 overflow-hidden">
+    <section ref={sectionRef} className="relative py-12 sm:py-16 overflow-hidden bg-[#f8f9fb]">
       {/* Divider */}
       <div data-section-glow className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[1px] bg-gradient-to-r from-transparent via-[#20aab6]/12 to-transparent" />
 
@@ -380,9 +380,9 @@ export default function TokenizationSection() {
             <span className="text-[9px] text-white/25 uppercase tracking-[0.15em] font-semibold">Coming Soon</span>
           </div>
           <h2 data-heading className="text-[1.75rem] sm:text-[2.25rem] lg:text-[2.75rem] font-bold leading-tight" style={{ willChange: "clip-path" }}>
-            <span className="text-white">Tokenization Projects</span>
+            <span className="text-[#1a1a2e]">Tokenization Projects</span>
           </h2>
-          <p data-subtitle className="mt-2 text-[11px] sm:text-xs text-white/20 max-w-sm mx-auto leading-relaxed" style={{ willChange: "transform, opacity" }}>
+          <p data-subtitle className="mt-2 text-[11px] sm:text-xs text-[#1a1a2e]/50 max-w-sm mx-auto leading-relaxed" style={{ willChange: "transform, opacity" }}>
             Institutional-grade fractional ownership of premium real estate
           </p>
         </div>
@@ -400,11 +400,11 @@ export default function TokenizationSection() {
         {/* ═══ Caption — tighter ═══ */}
         <motion.div ref={contentRef} initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }} transition={{ delay: 0.3, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }} className="mt-5 sm:mt-6 text-center" style={{ willChange: "transform", backfaceVisibility: "hidden" }} layout={false}>
-          <h3 className="text-base sm:text-lg font-semibold text-white/65">Luxury Beachfront Resort</h3>
-          <p className="text-[9px] sm:text-[10px] text-white/15 mt-0.5 uppercase tracking-wider font-medium">
+          <h3 className="text-base sm:text-lg font-semibold text-[#1a1a2e]">Luxury Beachfront Resort</h3>
+          <p className="text-[9px] sm:text-[10px] text-[#1a1a2e]/30 mt-0.5 uppercase tracking-wider font-medium">
             Caribbean Development · Tokenized Fractional Ownership
           </p>
-          <p className="mt-2.5 text-xs sm:text-sm text-white/25 max-w-md mx-auto leading-relaxed">
+          <p className="mt-2.5 text-xs sm:text-sm text-[#1a1a2e]/40 max-w-md mx-auto leading-relaxed">
             Fractional ownership of real estate development projects for exceptional return on investment. Pay with credit card or fiat.
           </p>
           {/* Feature badges */}
@@ -416,9 +416,9 @@ export default function TokenizationSection() {
               { label: "SEC Compliant", color: "#f7931a" },
               { label: "Audited", color: "#20aab6" },
             ].map((b) => (
-              <div key={b.label} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.025] border border-white/[0.04]">
+              <div key={b.label} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1a1a2e]/[0.03] border border-[#1a1a2e]/[0.08]">
                 <div className="w-1 h-1 rounded-full" style={{ backgroundColor: b.color, opacity: 0.5 }} />
-                <span className="text-[9px] text-white/25 font-medium">{b.label}</span>
+                <span className="text-[9px] text-[#1a1a2e]/35 font-medium">{b.label}</span>
               </div>
             ))}
           </div>
@@ -438,7 +438,7 @@ export default function TokenizationSection() {
 
       {/* Bottom gradient fade */}
       <div className="absolute bottom-0 left-0 right-0 h-[100px] pointer-events-none"
-        style={{ background: "linear-gradient(to bottom, transparent, rgb(7,8,15))" }} />
+        style={{ background: "linear-gradient(to bottom, transparent, rgb(248,249,251))" }} />
     </section>
   );
 }

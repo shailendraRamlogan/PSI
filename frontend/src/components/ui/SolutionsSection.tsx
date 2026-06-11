@@ -29,7 +29,7 @@ function MarqueeItem({ solution }: { solution: (typeof solutions)[0] }) {
       className="group flex flex-col items-center cursor-pointer"
       style={{ minWidth: "180px", padding: "0 20px" }}
     >
-      <div className="relative w-28 h-28 flex items-center justify-center overflow-hidden rounded-xl transition-transform duration-200 group-hover:scale-105 border border-white/10">
+      <div className="relative w-28 h-28 flex items-center justify-center overflow-hidden rounded-xl transition-transform duration-200 group-hover:scale-105 border border-black/10">
         <img
                     src={solution.image}
           alt={solution.title}
@@ -51,8 +51,8 @@ function MarqueeItem({ solution }: { solution: (typeof solutions)[0] }) {
         </span>
       </div>
       <span
-        className="mt-3 whitespace-nowrap transition-colors duration-200 group-hover:text-white"
-        style={{ fontSize: "13px", color: "rgba(255,255,255,0.7)" }}
+        className="mt-3 whitespace-nowrap transition-colors duration-200 group-hover:text-[#20aab6]"
+        style={{ fontSize: "13px", color: "rgba(0,0,0,0.55)" }}
       >
         {solution.title}
       </span>
@@ -101,13 +101,13 @@ export default function SolutionsSection() {
   }, []);
 
   return (
-    <section id="solutions" ref={sectionRef} className="relative py-12 sm:py-16 overflow-hidden">
+    <section id="solutions" ref={sectionRef} className="relative py-12 sm:py-16 overflow-hidden bg-[#f8f9fb]">
       {/* Section divider glow */}
       <div ref={dividerRef} data-section-glow className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[1px] bg-gradient-to-r from-transparent via-[#20aab6]/30 to-transparent" style={{ willChange: "transform" }} />
 
       {/* Top gradient fade */}
       <div className="absolute top-0 left-0 right-0 h-[80px] pointer-events-none"
-        style={{ background: "linear-gradient(to top, transparent, rgba(7,8,15,0.3))" }} />
+        style={{ background: "linear-gradient(to top, transparent, rgba(248,249,251,0.3))" }} />
 
       {/* Heading — unchanged */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -127,7 +127,7 @@ export default function SolutionsSection() {
             className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight max-w-3xl mx-auto"
             style={{ willChange: "clip-path" }}
           >
-            <span className="text-white">
+            <span className="text-[#1a1a2e]">
               On-ramp, off-ramp liquidity for global solutions in fiat and
               stablecoins.
             </span>
@@ -169,7 +169,7 @@ export default function SolutionsSection() {
 
       {/* Bottom gradient fade */}
       <div className="absolute bottom-0 left-0 right-0 h-[100px] pointer-events-none"
-        style={{ background: "linear-gradient(to bottom, transparent, rgb(7,8,15))" }} />
+        style={{ background: "linear-gradient(to bottom, transparent, rgb(248,249,251))" }} />
     </section>
   );
 }

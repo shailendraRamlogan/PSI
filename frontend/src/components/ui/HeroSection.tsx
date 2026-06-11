@@ -265,6 +265,7 @@ export default function HeroSection() {
           muted
           loop
           playsInline
+          style={{ filter: 'opacity(0.3)' }}
           className="absolute inset-0 w-full h-full object-cover"
           src="/Hero.mp4"
         />
@@ -301,7 +302,7 @@ export default function HeroSection() {
           </motion.h1>
 
           <motion.p custom={2} variants={fadeInUp} initial="hidden" animate="visible"
-            className="mt-4 text-[13px] sm:text-sm text-white/30 max-w-[380px] leading-relaxed" layout={false}>
+            className="mt-4 text-[13px] sm:text-sm text-white/80 max-w-[380px] leading-relaxed" layout={false}>
             On-ramp, off-ramp liquidity for global solutions in Fiat and Stablecoins. Seamless cross-border payments, conversions, and institutional-grade infrastructure — built for the modern economy.
           </motion.p>
 

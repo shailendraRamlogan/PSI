@@ -16,20 +16,20 @@ export default function Home() {
         <Navbar />
         <HeroSection />
         <CinematicTransition
-          fromColor="rgba(7,8,15,0.6)"
-          toColor="rgba(7,8,15,0.3)"
+          fromColor="rgba(7,8,15,0.8)"
+          toColor="rgba(248,249,251,0.8)"
           glowColor="rgba(108,99,255,0.03)"
         />
         <SolutionsSection />
         <CinematicTransition
-          fromColor="rgba(7,8,15,0.3)"
-          toColor="rgba(7,8,15,0.4)"
+          fromColor="rgba(248,249,251,0.5)"
+          toColor="rgba(248,249,251,0.8)"
           glowColor="rgba(59,130,246,0.025)"
         />
         <DashboardSection />
         <CinematicTransition
-          fromColor="rgba(7,8,15,0.4)"
-          toColor="rgba(7,8,15,0.2)"
+          fromColor="rgba(248,249,251,0.8)"
+          toColor="rgba(7,8,15,0.8)"
           glowColor="rgba(139,92,246,0.03)"
         />
         <VisaCardSection />
@@ -40,14 +40,14 @@ export default function Home() {
         />
         <GiftCardsSection />
         <CinematicTransition
-          fromColor="rgba(7,8,15,0.3)"
-          toColor="rgba(7,8,15,0.2)"
+          fromColor="rgba(7,8,15,0.2)"
+          toColor="rgba(248,249,251,0.8)"
           glowColor="rgba(6,182,212,0.025)"
         />
         <TokenizationSection />
         <CinematicTransition
-          fromColor="rgba(7,8,15,0.2)"
-          toColor="rgba(7,8,15,0.3)"
+          fromColor="rgba(248,249,251,0.8)"
+          toColor="rgba(7,8,15,0.8)"
           glowColor="rgba(108,99,255,0.025)"
         />
         <FaqSection />
