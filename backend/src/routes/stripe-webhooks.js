@@ -1,7 +1,7 @@
 import { stripe } from "../lib/stripe.js";
 import pool from "../db/pool.js";
 import eventBus from "../events/eventBus.js";
-import { sendCryptoPurchaseReceipt } from "../lib/email.js";
+import { sendCryptoPurchaseReceipt, sendAdminCryptoPurchaseAlert } from "../lib/email.js";
 
 export async function stripeWebhookHandler(req, res) {
   const sig = req.headers["stripe-signature"];
@@ -111,6 +111,22 @@ export async function stripeWebhookHandler(req, res) {
           }
         } catch (emailErr) {
           console.error("[Stripe Webhook] Failed to send purchase receipt email:", emailErr);
+        }
+
+        // Send admin notification email
+        try {
+          await sendAdminCryptoPurchaseAlert({
+            refId,
+            userName: userRes?.rows[0]?.name || "Customer",
+            amount: numAmount,
+            fee: feeAmount,
+            total: totalAmount,
+            network,
+            walletAddress,
+            walletLabel: walletLabel || null,
+          });
+        } catch (adminEmailErr) {
+          console.error("[Stripe Webhook] Failed to send admin purchase alert:", adminEmailErr);
         }
 
         console.log(`[Stripe Webhook] CRYPTO_PURCHASE_CONFIRMED for ref ${refId} (purchase id ${purchaseId})`);

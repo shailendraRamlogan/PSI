@@ -217,13 +217,8 @@ export default function Footer() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-12">
           {/* Brand column */}
           <div data-footer-col className="col-span-2 sm:col-span-1">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg bg-[#20aab6] flex items-center justify-center font-bold text-white text-xs">
-                P
-              </div>
-              <span className="text-white font-semibold text-base tracking-wide">
-                PSI
-              </span>
+            <Link href="/" className="inline-block">
+              <img src="/images/psi-logo-nav.png" alt="PSI" className="h-8 w-auto" />
             </Link>
             <p className="mt-4 text-xs sm:text-sm text-white/30 leading-relaxed max-w-xs">
               Payment Solutions International — bridging traditional finance and

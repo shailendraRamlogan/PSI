@@ -5,7 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
-import { sendEmail } from "../lib/email.js";
+import { sendEmail, sendAdminPaymentRequestAlert } from "../lib/email.js";
 
 const router = Router();
 
@@ -136,50 +136,64 @@ router.post("/", authMiddleware, receiptUpload.single("receipt"), async (req, re
         to: req.user.email,
         subject: `PSI — Payment Request Submitted (${refId})`,
         html: `
-          <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:480px;margin:0 auto;background:#0d0f1a;border-radius:16px;overflow:hidden;">
-            <div style="padding:40px 32px;">
-              <div style="text-align:center;margin-bottom:32px">
-                <img src="https://psi.ourea.tech/images/psi-logo.png" alt="PSI" width="160" style="display:block;margin:0 auto" />
+          <div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;max-width:520px;margin:0 auto;background:#0f1117;">
+            <div style="padding:40px 24px;">
+              <div style="text-align:center;margin-bottom:28px">
+                <img src="https://psi.ourea.tech/images/psi-logo.png" alt="PSI" width="100" style="display:block;margin:0 auto" />
               </div>
-              <h1 style="color:#fff;font-size:22px;font-weight:700;margin:0 0 8px;">Payment Request Submitted</h1>
-              <p style="color:rgba(255,255,255,0.5);font-size:14px;line-height:1.6;margin:0 0 28px;">
-                Hi ${req.user.name || "Customer"},<br/>
-                We've received your payment request and will begin processing it shortly.
-              </p>
-              <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;margin:0 0 24px;">
-                <p style="color:rgba(255,255,255,0.4);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px;">Reference</p>
-                <p style="color:#20aab6;font-size:14px;font-weight:600;margin:0 0 16px;">${refId}</p>
-                <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:16px;">
-                  <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                    <span style="color:rgba(255,255,255,0.5);font-size:13px;">Amount</span>
-                    <span style="color:#fff;font-size:14px;font-weight:600;">${currency || "TTD"} ${parseFloat(amount).toFixed(2)}</span>
-                  </div>
-                  <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                    <span style="color:rgba(255,255,255,0.5);font-size:13px;">Handling Fee</span>
-                    <span style="color:#fff;font-size:14px;">${feePercent}% ($${feeAmount.toFixed(2)})</span>
-                  </div>
-                  <div style="display:flex;justify-content:space-between;">
-                    <span style="color:rgba(255,255,255,0.5);font-size:13px;">Beneficiary</span>
-                    <span style="color:#fff;font-size:14px;">${beneficiary_company_name}</span>
+              <div style="text-align:center;margin-bottom:8px">
+                <div style="display:inline-block;background:rgba(0,224,161,0.12);border:1px solid rgba(0,224,161,0.3);color:#00e0a1;font-size:11px;font-weight:600;letter-spacing:0.06em;padding:5px 14px;border-radius:50px;">PAYMENT REQUEST RECEIVED</div>
+              </div>
+              <h1 style="color:#00e0a1;font-size:26px;font-weight:700;margin:0 0 8px;text-align:center;">Payment Request Submitted</h1>
+              <p style="color:rgba(255,255,255,0.45);font-size:14px;line-height:1.6;margin:0 auto 28px;text-align:center;max-width:400px;">Your payment request has been received and will begin processing shortly.</p>
+              <div style="margin-bottom:12px">
+                <div style="background:#1a1d27;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:20px 24px;">
+                  <p style="color:rgba(255,255,255,0.45);font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;margin:0 0 12px;">PAYMENT DETAILS</p>
+                  <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr><td style="color:rgba(255,255,255,0.45);font-size:14px;padding:6px 0;">Reference</td><td style="color:#4db8ff;font-size:14px;font-weight:500;text-align:right;padding:6px 0;">${refId}</td></tr>
+                      <tr><td style="color:rgba(255,255,255,0.45);font-size:14px;padding:6px 0;">Amount</td><td style="color:#ffffff;font-size:14px;font-weight:500;text-align:right;padding:6px 0;">${currency || "TTD"} ${parseFloat(amount).toFixed(2)}</td></tr>
+                      <tr><td style="color:rgba(255,255,255,0.45);font-size:14px;padding:6px 0;">Handling Fee</td><td style="color:#ffffff;font-size:14px;font-weight:500;text-align:right;padding:6px 0;">${feePercent}% ($${feeAmount.toFixed(2)})</td></tr>
+                      <tr><td style="color:rgba(255,255,255,0.45);font-size:14px;padding:6px 0;">Beneficiary</td><td style="color:#ffffff;font-size:14px;font-weight:500;text-align:right;padding:6px 0;">${beneficiary_company_name}</td></tr>
+                    </table>
                   </div>
                 </div>
               </div>
-              <p style="color:rgba(255,255,255,0.5);font-size:13px;line-height:1.6;margin:0 0 4px;">Next steps:</p>
-              <ul style="color:rgba(255,255,255,0.5);font-size:13px;line-height:2;padding-left:20px;margin:0 0 24px;">
-                <li>Transfer funds to PSI</li>
-                <li>PSI confirms receipt</li>
-                <li>PSI pays the beneficiary on your behalf</li>
-              </ul>
-              <p style="color:rgba(255,255,255,0.3);font-size:12px;margin:0;">You'll receive email updates at each stage of the process.</p>
+              <div style="margin-bottom:24px">
+                <div style="background:#1a1d27;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:20px 24px;">
+                  <p style="color:rgba(255,255,255,0.45);font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;margin:0 0 12px;">NEXT STEPS</p>
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr><td style="color:rgba(255,255,255,0.45);font-size:14px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);"><span style="color:#00e0a1;font-weight:600;margin-right:8px;">1.</span> Transfer funds to PSI</td></tr>
+                    <tr><td style="color:rgba(255,255,255,0.45);font-size:14px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);"><span style="color:rgba(255,255,255,0.3);font-weight:600;margin-right:8px;">2.</span> PSI confirms receipt</td></tr>
+                    <tr><td style="color:rgba(255,255,255,0.45);font-size:14px;padding:5px 0;"><span style="color:rgba(255,255,255,0.3);font-weight:600;margin-right:8px;">3.</span> PSI pays the beneficiary on your behalf</td></tr>
+                  </table>
+                </div>
+              </div>
             </div>
-            <div style="padding:16px 32px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
-              <p style="color:rgba(255,255,255,0.2);font-size:11px;margin:0;">Payment Solutions International</p>
+            <div style="padding:16px 24px;text-align:center;border-top:1px solid rgba(255,255,255,0.06);">
+              <p style="color:rgba(255,255,255,0.25);font-size:12px;margin:0;">Payment Solutions International</p>
             </div>
           </div>
         `,
       });
     } catch (emailErr) {
       console.error("[Payments] Failed to send submission email:", emailErr);
+    }
+
+    // Send admin notification email
+    try {
+      await sendAdminPaymentRequestAlert({
+        refId,
+        userName: req.user.name || "Customer",
+        userEmail: req.user.email,
+        amount: numAmount,
+        currency: currency || "TTD",
+        feePercent,
+        feeAmount,
+        beneficiary: beneficiary_company_name,
+      });
+    } catch (adminEmailErr) {
+      console.error("[Payments] Failed to send admin payment alert:", adminEmailErr);
     }
 
     res.status(201).json({
@@ -434,34 +448,32 @@ router.patch("/admin/:id/receive", authMiddleware, adminOnly, async (req, res) =
           to: user.email,
           subject: `PSI — Funds Received (${pr.ref_id})`,
           html: `
-            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:480px;margin:0 auto;background:#0d0f1a;border-radius:16px;overflow:hidden;">
-              <div style="padding:40px 32px;">
-                <div style="text-align:center;margin-bottom:32px">
-                  <img src="https://psi.ourea.tech/images/psi-logo.png" alt="PSI" width="160" style="display:block;margin:0 auto" />
+            <div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;max-width:520px;margin:0 auto;background:#0f1117;">
+              <div style="padding:40px 24px;">
+                <div style="text-align:center;margin-bottom:28px">
+                  <img src="https://psi.ourea.tech/images/psi-logo.png" alt="PSI" width="100" style="display:block;margin:0 auto" />
                 </div>
-                <h1 style="color:#20aab6;font-size:22px;font-weight:700;margin:0 0 8px;">Funds Received ✓</h1>
-                <p style="color:rgba(255,255,255,0.5);font-size:14px;line-height:1.6;margin:0 0 28px;">
-                  Hi ${user.name || "Customer"},<br/>
-                  PSI has confirmed receipt of your funds. We are now processing the payment to your beneficiary.
-                </p>
-                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;margin:0 0 24px;">
-                  <p style="color:rgba(255,255,255,0.4);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px;">Reference</p>
-                  <p style="color:#20aab6;font-size:14px;font-weight:600;margin:0 0 16px;">${pr.ref_id}</p>
-                  <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:16px;">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                      <span style="color:rgba(255,255,255,0.5);font-size:13px;">Amount</span>
-                      <span style="color:#fff;font-size:14px;font-weight:600;">${pr.currency} ${parseFloat(pr.amount).toFixed(2)}</span>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;">
-                      <span style="color:rgba(255,255,255,0.5);font-size:13px;">Beneficiary</span>
-                      <span style="color:#fff;font-size:14px;">${pr.beneficiary_company_name}</span>
+                <div style="text-align:center;margin-bottom:8px">
+                  <div style="display:inline-block;background:rgba(0,224,161,0.12);border:1px solid rgba(0,224,161,0.3);color:#00e0a1;font-size:11px;font-weight:600;letter-spacing:0.06em;padding:5px 14px;border-radius:50px;">FUNDS RECEIVED</div>
+                </div>
+                <h1 style="color:#00e0a1;font-size:26px;font-weight:700;margin:0 0 8px;text-align:center;">Funds Received ✓</h1>
+                <p style="color:rgba(255,255,255,0.45);font-size:14px;line-height:1.6;margin:0 auto 28px;text-align:center;max-width:400px;">PSI has confirmed your funds and is now processing the payment to your beneficiary.</p>
+                <div style="margin-bottom:16px">
+                  <div style="background:#1a1d27;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:20px 24px;">
+                    <p style="color:rgba(255,255,255,0.45);font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;margin:0 0 12px;">PAYMENT DETAILS</p>
+                    <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;">
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr><td style="color:rgba(255,255,255,0.45);font-size:14px;padding:6px 0;">Reference</td><td style="color:#4db8ff;font-size:14px;font-weight:500;text-align:right;padding:6px 0;">${pr.ref_id}</td></tr>
+                        <tr><td style="color:rgba(255,255,255,0.45);font-size:14px;padding:6px 0;">Amount</td><td style="color:#ffffff;font-size:14px;font-weight:500;text-align:right;padding:6px 0;">${pr.currency} ${parseFloat(pr.amount).toFixed(2)}</td></tr>
+                        <tr><td style="color:rgba(255,255,255,0.45);font-size:14px;padding:6px 0;">Beneficiary</td><td style="color:#ffffff;font-size:14px;font-weight:500;text-align:right;padding:6px 0;">${pr.beneficiary_company_name}</td></tr>
+                      </table>
                     </div>
                   </div>
                 </div>
-                <p style="color:rgba(255,255,255,0.3);font-size:12px;margin:0;">You'll receive a final email once the payment to your beneficiary is complete.</p>
+                <p style="color:rgba(255,255,255,0.35);font-size:13px;line-height:1.6;margin:0;padding:4px 0;">You'll receive a final email once the payment to your beneficiary is complete.</p>
               </div>
-              <div style="padding:16px 32px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
-                <p style="color:rgba(255,255,255,0.2);font-size:11px;margin:0;">Payment Solutions International</p>
+              <div style="padding:16px 24px;text-align:center;border-top:1px solid rgba(255,255,255,0.06);">
+                <p style="color:rgba(255,255,255,0.25);font-size:12px;margin:0;">Payment Solutions International</p>
               </div>
             </div>
           `,
@@ -523,46 +535,42 @@ router.patch("/admin/:id/pay", authMiddleware, adminOnly, proofUpload.single("pr
           to: user.email,
           subject: `PSI — Payment Complete (${request.ref_id})`,
           html: `
-            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:480px;margin:0 auto;background:#0d0f1a;border-radius:16px;overflow:hidden;">
-              <div style="padding:40px 32px;">
-                <div style="text-align:center;margin-bottom:32px">
-                  <img src="https://psi.ourea.tech/images/psi-logo.png" alt="PSI" width="160" style="display:block;margin:0 auto" />
+            <div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;max-width:520px;margin:0 auto;background:#0f1117;">
+              <div style="padding:40px 24px;">
+                <div style="text-align:center;margin-bottom:28px">
+                  <img src="https://psi.ourea.tech/images/psi-logo.png" alt="PSI" width="100" style="display:block;margin:0 auto" />
                 </div>
-                <h1 style="color:#10b981;font-size:22px;font-weight:700;margin:0 0 8px;">Payment Complete ✓</h1>
-                <p style="color:rgba(255,255,255,0.5);font-size:14px;line-height:1.6;margin:0 0 28px;">
-                  Hi ${user.name || "Customer"},<br/>
-                  PSI has successfully paid ${request.beneficiary_company_name} on your behalf.
-                </p>
-                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;margin:0 0 24px;">
-                  <p style="color:rgba(255,255,255,0.4);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px;">Reference</p>
-                  <p style="color:#20aab6;font-size:14px;font-weight:600;margin:0 0 16px;">${request.ref_id}</p>
-                  <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:16px;">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                      <span style="color:rgba(255,255,255,0.5);font-size:13px;">Your Amount</span>
-                      <span style="color:#fff;font-size:14px;font-weight:600;">${request.currency} ${parseFloat(request.amount).toFixed(2)}</span>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                      <span style="color:rgba(255,255,255,0.5);font-size:13px;">Remitted</span>
-                      <span style="color:#fff;font-size:14px;font-weight:600;">${remittance_currency} ${parseFloat(remittance_amount).toFixed(2)}</span>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;">
-                      <span style="color:rgba(255,255,255,0.5);font-size:13px;">Beneficiary</span>
-                      <span style="color:#fff;font-size:14px;">${request.beneficiary_company_name}</span>
+                <div style="text-align:center;margin-bottom:8px">
+                  <div style="display:inline-block;background:rgba(0,224,161,0.12);border:1px solid rgba(0,224,161,0.3);color:#00e0a1;font-size:11px;font-weight:600;letter-spacing:0.06em;padding:5px 14px;border-radius:50px;">PAYMENT COMPLETE</div>
+                </div>
+                <h1 style="color:#00e0a1;font-size:26px;font-weight:700;margin:0 0 8px;text-align:center;">Payment Complete ✓</h1>
+                <p style="color:rgba(255,255,255,0.45);font-size:14px;line-height:1.6;margin:0 auto 28px;text-align:center;max-width:400px;">PSI has successfully paid ${request.beneficiary_company_name} on your behalf.</p>
+                <div style="margin-bottom:12px">
+                  <div style="background:#1a1d27;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:20px 24px;">
+                    <p style="color:rgba(255,255,255,0.45);font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;margin:0 0 12px;">PAYMENT DETAILS</p>
+                    <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;">
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr><td style="color:rgba(255,255,255,0.45);font-size:14px;padding:6px 0;">Your Amount</td><td style="color:#ffffff;font-size:14px;font-weight:500;text-align:right;padding:6px 0;">${request.currency} ${parseFloat(request.amount).toFixed(2)}</td></tr>
+                        <tr><td style="color:rgba(255,255,255,0.45);font-size:14px;padding:6px 0;">Remitted</td><td style="color:#00e0a1;font-size:14px;font-weight:500;text-align:right;padding:6px 0;">${remittance_currency} ${parseFloat(remittance_amount).toFixed(2)}</td></tr>
+                        <tr><td style="color:rgba(255,255,255,0.45);font-size:14px;padding:6px 0;">Beneficiary</td><td style="color:#ffffff;font-size:14px;font-weight:700;text-align:right;padding:6px 0;">${request.beneficiary_company_name}</td></tr>
+                      </table>
                     </div>
                   </div>
                 </div>
-                ${proofPath ? `
-                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;margin:0 0 24px;">
-                  <p style="color:rgba(255,255,255,0.4);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Transfer Proof</p>
-                  <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:0;">A proof of transfer document has been attached to your payment record.</p>
+                <div style="margin-bottom:24px">
+                  <div style="background:#1a1d27;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:20px 24px;">
+                    <p style="color:rgba(255,255,255,0.45);font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;margin:0 0 12px;">TRANSFER PROOF</p>
+                    <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;">
+                      <p style="color:rgba(255,255,255,0.45);font-size:14px;line-height:1.6;margin:0;">${proofPath ? "A proof of transfer document has been attached to your payment record." : "No proof of transfer was uploaded."}</p>
+                    </div>
+                  </div>
                 </div>
-                ` : ''}
-                <div style="text-align:center;margin-top:24px;">
-                  <a href="${dashboardUrl}" style="display:inline-block;background:#20aab6;color:#fff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 28px;border-radius:50px;">View in Dashboard</a>
+                <div style="text-align:center">
+                  <a href="${dashboardUrl}" style="display:inline-block;width:100%;max-width:520px;background:#00c9a7;color:#000000;text-decoration:none;font-size:14px;font-weight:600;padding:14px 0;border-radius:8px;text-align:center;">View in Dashboard</a>
                 </div>
               </div>
-              <div style="padding:16px 32px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
-                <p style="color:rgba(255,255,255,0.2);font-size:11px;margin:0;">Payment Solutions International</p>
+              <div style="padding:16px 24px;text-align:center;border-top:1px solid rgba(255,255,255,0.06);">
+                <p style="color:rgba(255,255,255,0.25);font-size:12px;margin:0;">Payment Solutions International</p>
               </div>
             </div>
           `,

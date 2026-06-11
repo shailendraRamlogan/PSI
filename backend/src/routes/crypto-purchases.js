@@ -7,6 +7,29 @@ import { sendCryptoRemittanceConfirmation } from "../lib/email.js";
 
 const router = Router();
 
+// ─── Stripe Customer helper ───
+async function getOrCreateStripeCustomer(user) {
+  if (user.stripe_customer_id) {
+    return user.stripe_customer_id;
+  }
+
+  const customer = await stripe.customers.create({
+    email: user.email,
+    name: user.name,
+    metadata: {
+      user_id: String(user.id),
+      country: user.jurisdiction || "International",
+    },
+  });
+
+  await pool.query(
+    `UPDATE users SET stripe_customer_id = $1 WHERE id = $2`,
+    [customer.id, user.id]
+  );
+
+  return customer.id;
+}
+
 function adminOnly(req, res, next) {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
   next();
@@ -43,15 +66,29 @@ router.post("/prepare", authMiddleware, async (req, res) => {
 
     const refId = generateRefId();
 
+    // Fetch full user record for Stripe customer creation
+    const userResult = await pool.query(
+      `SELECT id, name, email, jurisdiction, stripe_customer_id FROM users WHERE id = $1`,
+      [req.user.id]
+    );
+    const dbUser = userResult.rows[0];
+
+    // Get or create Stripe Customer
+    const stripeCustomerId = await getOrCreateStripeCustomer(dbUser);
+
     // Create Stripe PaymentIntent
     const amountCents = Math.round(totalAmount * 100);
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountCents,
       currency: "usd",
+      customer: stripeCustomerId,
       payment_method_types: ["card"],
       metadata: {
         ref_id: refId,
         user_id: String(req.user.id),
+        customer_name: dbUser.name,
+        customer_email: dbUser.email,
+        customer_country: dbUser.jurisdiction || "International",
         amount: String(numAmount),
         fee_percent: String(feePercent),
         fee_amount: String(feeAmount),

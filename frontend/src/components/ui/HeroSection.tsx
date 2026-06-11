@@ -310,9 +310,7 @@ export default function HeroSection() {
             <Link href="/get-started">
               <motion.button whileHover={{ scale: 1.04, y: -1 }} whileTap={{ scale: 0.97 }}
                 className="relative overflow-hidden px-6 py-2.5 rounded-full text-[13px] font-semibold text-white flex items-center gap-2 group
-                  bg-[#20aab6]
-                  shadow-[0_0_20px_rgba(32,170,182,0.25),0_0_60px_rgba(32,170,182,0.1)]
-                  hover:shadow-[0_0_30px_rgba(32,170,182,0.35),0_0_80px_rgba(32,170,182,0.15)]
+                  btn-glow
                   transition-shadow duration-500" layout={false}>
                 <span className="absolute inset-0 rounded-full bg-white/[0.08] backdrop-blur-sm border border-white/[0.1]" />
                 <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12" />
