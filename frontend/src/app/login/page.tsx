@@ -93,7 +93,7 @@ export default function LoginPage() {
         {/* Logo + heading */}
         <motion.div custom={0} variants={fadeInUp} initial="hidden" animate="visible" className="text-center mb-10">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <img src="/images/psi-logo-nav.png" alt="PSI" className="h-9 w-auto" />
+            <img src="/images/psi-logo-nav.png" alt="PSI" className="h-20 w-auto" />
           </Link>
           <h1 className="text-2xl font-bold">{onPanel ? "Admin Portal" : "Welcome back"}</h1>
           <p className="text-white/40 text-[14px] mt-2">{onPanel ? "Sign in with your admin credentials" : "Sign in to your PSI account"}</p>

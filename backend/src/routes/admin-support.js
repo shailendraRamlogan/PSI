@@ -47,7 +47,7 @@ function adminReplyEmailHtml(ticket, messageBody, user) {
   return `<body style="margin:0;padding:0;background:#0d0f1a;font-family:system-ui,-apple-system,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;">
     <tr><td style="padding:32px 24px;text-align:center;">
-      <div style="font-size:24px;font-weight:700;color:#20aab6;">PSI Platform</div>
+      <img src="https://psi.ourea.tech/images/psi-logo.png" alt="PSI" width="160" style="display:block;margin:0 auto" />
     </td></tr>
     <tr><td style="padding:24px;">
       <p style="color:#fff;font-size:16px;">Hi ${user.name || "User"},</p>
@@ -75,7 +75,7 @@ function resolvedEmailHtml(ticket) {
   return `<body style="margin:0;padding:0;background:#0d0f1a;font-family:system-ui,-apple-system,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;">
     <tr><td style="padding:32px 24px;text-align:center;">
-      <div style="font-size:24px;font-weight:700;color:#20aab6;">PSI Platform</div>
+      <img src="https://psi.ourea.tech/images/psi-logo.png" alt="PSI" width="160" style="display:block;margin:0 auto" />
     </td></tr>
     <tr><td style="padding:24px;">
       <p style="color:#fff;font-size:16px;">Your support ticket has been marked as resolved.</p>
@@ -99,7 +99,7 @@ function closedEmailHtml(ticket) {
   return `<body style="margin:0;padding:0;background:#0d0f1a;font-family:system-ui,-apple-system,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;">
     <tr><td style="padding:32px 24px;text-align:center;">
-      <div style="font-size:24px;font-weight:700;color:#20aab6;">PSI Platform</div>
+      <img src="https://psi.ourea.tech/images/psi-logo.png" alt="PSI" width="160" style="display:block;margin:0 auto" />
     </td></tr>
     <tr><td style="padding:24px;">
       <p style="color:#fff;font-size:16px;">Your support ticket has been closed.</p>

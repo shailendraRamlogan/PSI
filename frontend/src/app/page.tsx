@@ -20,30 +20,20 @@ export default function Home() {
           toColor="rgba(248,249,251,0.8)"
           glowColor="rgba(108,99,255,0.03)"
         />
+        <div className="bg-[#f8f9fb]">
         <SolutionsSection />
-        <CinematicTransition
-          fromColor="rgba(248,249,251,0.5)"
-          toColor="rgba(248,249,251,0.8)"
-          glowColor="rgba(59,130,246,0.025)"
-        />
         <DashboardSection />
-        <CinematicTransition
-          fromColor="rgba(248,249,251,0.8)"
-          toColor="rgba(7,8,15,0.8)"
-          glowColor="rgba(139,92,246,0.03)"
-        />
+        </div>
+        {/* Light → Dark transition (Dashboard → VisaCard) */}
+        <div className="relative w-full h-[200px] leading-[0]">
+          <img src="/images/section-transition.png" alt="" className="absolute inset-0 w-full h-full object-fill" />
+        </div>
         <VisaCardSection />
-        <CinematicTransition
-          fromColor="rgba(7,8,15,0.2)"
-          toColor="rgba(7,8,15,0.3)"
-          glowColor="rgba(247,147,26,0.025)"
-        />
         <GiftCardsSection />
-        <CinematicTransition
-          fromColor="rgba(7,8,15,0.2)"
-          toColor="rgba(248,249,251,0.8)"
-          glowColor="rgba(6,182,212,0.025)"
-        />
+        {/* Dark → Light transition (GiftCards → Tokenization) — inverted */}
+        <div className="relative w-full h-[200px] leading-[0] -scale-y-100">
+          <img src="/images/section-transition.png" alt="" className="absolute inset-0 w-full h-full object-fill" />
+        </div>
         <TokenizationSection />
         <CinematicTransition
           fromColor="rgba(248,249,251,0.8)"

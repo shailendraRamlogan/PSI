@@ -2,7 +2,7 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM_EMAIL = process.env.EMAIL_FROM || "PSI <onboarding@resend.dev>";
+const FROM_EMAIL = process.env.EMAIL_FROM || "PSI <support@ourea.tech>";
 
 /**
  * Generic email sender.
@@ -34,9 +34,8 @@ export async function sendVerificationEmail(email, name, token) {
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; background: #0d0f1a; border-radius: 16px; overflow: hidden;">
         <div style="padding: 40px 32px;">
-          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 32px;">
-            <div style="width: 36px; height: 36px; border-radius: 8px; background: #20aab6; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 14px;">P</div>
-            <span style="color: #ffffff; font-weight: 600; font-size: 18px; letter-spacing: 0.5px;">PSI</span>
+          <div style="text-align:center;margin-bottom:32px">
+            <img src="https://psi.ourea.tech/images/psi-logo.png" alt="PSI" width="160" style="display:block;margin:0 auto" />
           </div>
 
           <h1 style="color: #ffffff; font-size: 22px; font-weight: 700; margin: 0 0 8px;">Verify your email</h1>
@@ -81,9 +80,8 @@ export async function sendPasswordResetEmail(email, name, token) {
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; background: #0d0f1a; border-radius: 16px; overflow: hidden;">
         <div style="padding: 40px 32px;">
-          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 32px;">
-            <div style="width: 36px; height: 36px; border-radius: 8px; background: #20aab6; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 14px;">P</div>
-            <span style="color: #ffffff; font-weight: 600; font-size: 18px; letter-spacing: 0.5px;">PSI</span>
+          <div style="text-align:center;margin-bottom:32px">
+            <img src="https://psi.ourea.tech/images/psi-logo.png" alt="PSI" width="160" style="display:block;margin:0 auto" />
           </div>
 
           <h1 style="color: #ffffff; font-size: 22px; font-weight: 700; margin: 0 0 8px;">Reset your password</h1>
@@ -112,5 +110,133 @@ export async function sendPasswordResetEmail(email, name, token) {
     throw new Error("Failed to send password reset email");
   }
 
+  return data;
+}
+
+/**
+ * Send a crypto purchase receipt email when payment succeeds.
+ */
+export async function sendCryptoPurchaseReceipt({ email, name, refId, amount, fee, total, network, walletAddress, walletLabel }) {
+  const { data, error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: email,
+    subject: `PSI — Crypto Purchase Confirmed (${refId})`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; background: #0d0f1a; border-radius: 16px; overflow: hidden;">
+        <div style="padding: 40px 32px;">
+          <div style="text-align:center;margin-bottom:32px">
+            <img src="https://psi.ourea.tech/images/psi-logo.png" alt="PSI" width="160" style="display:block;margin:0 auto" />
+          </div>
+
+          <h1 style="color: #ffffff; font-size: 22px; font-weight: 700; margin: 0 0 8px;">Purchase Confirmed</h1>
+          <p style="color: rgba(255,255,255,0.5); font-size: 14px; line-height: 1.6; margin: 0 0 28px;">
+            Hi ${name},<br/>
+            Your crypto purchase has been confirmed. We're processing your order and will remit the crypto to your wallet shortly.
+          </p>
+
+          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;margin:0 0 24px;">
+            <p style="color:rgba(255,255,255,0.4);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px;">Reference</p>
+            <p style="color:#20aab6;font-size:14px;font-weight:600;margin:0 0 16px;">${refId}</p>
+            <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:16px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                <span style="color:rgba(255,255,255,0.5);font-size:13px;">Amount</span>
+                <span style="color:#fff;font-size:14px;font-weight:600;">$${parseFloat(amount).toFixed(2)}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                <span style="color:rgba(255,255,255,0.5);font-size:13px;">Handling Fee</span>
+                <span style="color:#fff;font-size:14px;">$${parseFloat(fee).toFixed(2)}</span>
+              </div>
+              <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;display:flex;justify-content:space-between;">
+                <span style="color:rgba(255,255,255,0.5);font-size:13px;font-weight:600;">Total Charged</span>
+                <span style="color:#fff;font-size:15px;font-weight:700;">$${parseFloat(total).toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;margin:0 0 24px;">
+            <p style="color:rgba(255,255,255,0.4);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Destination</p>
+            <p style="color:#fff;font-size:14px;margin:0 0 4px;">${walletLabel || 'Wallet'}</p>
+            <p style="color:rgba(255,255,255,0.5);font-size:12px;word-break:break-all;margin:0;">${walletAddress}</p>
+            <p style="color:rgba(255,255,255,0.3);font-size:11px;margin:8px 0 0;">Network: ${network}</p>
+          </div>
+
+          <p style="color: rgba(255,255,255,0.3); font-size: 12px; margin: 0;">
+            You'll receive a second email once the crypto has been remitted to your wallet.
+          </p>
+        </div>
+        <div style="padding: 16px 32px; border-top: 1px solid rgba(255,255,255,0.06); text-align: center;">
+          <p style="color: rgba(255,255,255,0.2); font-size: 11px; margin: 0;">Payment Solutions International</p>
+        </div>
+      </div>
+    `,
+  });
+  if (error) {
+    console.error("Resend crypto purchase receipt error:", error);
+    throw new Error("Failed to send crypto purchase receipt");
+  }
+  return data;
+}
+
+/**
+ * Send a crypto remittance confirmation email when crypto is sent to the wallet.
+ */
+export async function sendCryptoRemittanceConfirmation({ email, name, refId, amount, network, walletAddress, walletLabel, transactionHash }) {
+  const { data, error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: email,
+    subject: `PSI — Crypto Remitted to Your Wallet (${refId})`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; background: #0d0f1a; border-radius: 16px; overflow: hidden;">
+        <div style="padding: 40px 32px;">
+          <div style="text-align:center;margin-bottom:32px">
+            <img src="https://psi.ourea.tech/images/psi-logo.png" alt="PSI" width="160" style="display:block;margin:0 auto" />
+          </div>
+
+          <h1 style="color: #10b981; font-size: 22px; font-weight: 700; margin: 0 0 8px;">Crypto Remitted ✓</h1>
+          <p style="color: rgba(255,255,255,0.5); font-size: 14px; line-height: 1.6; margin: 0 0 28px;">
+            Hi ${name},<br/>
+            Your crypto has been successfully remitted to your wallet.
+          </p>
+
+          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;margin:0 0 24px;">
+            <p style="color:rgba(255,255,255,0.4);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px;">Reference</p>
+            <p style="color:#20aab6;font-size:14px;font-weight:600;margin:0 0 16px;">${refId}</p>
+            <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:16px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                <span style="color:rgba(255,255,255,0.5);font-size:13px;">Amount</span>
+                <span style="color:#fff;font-size:14px;font-weight:600;">$${parseFloat(amount).toFixed(2)}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:rgba(255,255,255,0.5);font-size:13px;">Network</span>
+                <span style="color:#fff;font-size:14px;">${network}</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;margin:0 0 24px;">
+            <p style="color:rgba(255,255,255,0.4);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Transaction Hash</p>
+            <p style="color:#fff;font-size:12px;word-break:break-all;margin:0;">${transactionHash}</p>
+          </div>
+
+          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;margin:0 0 24px;">
+            <p style="color:rgba(255,255,255,0.4);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Sent To</p>
+            <p style="color:#fff;font-size:14px;margin:0 0 4px;">${walletLabel || 'Wallet'}</p>
+            <p style="color:rgba(255,255,255,0.5);font-size:12px;word-break:break-all;margin:0;">${walletAddress}</p>
+          </div>
+
+          <p style="color: rgba(255,255,255,0.3); font-size: 12px; margin: 0;">
+            Blockchain confirmations may take a few minutes to complete.
+          </p>
+        </div>
+        <div style="padding: 16px 32px; border-top: 1px solid rgba(255,255,255,0.06); text-align: center;">
+          <p style="color: rgba(255,255,255,0.2); font-size: 11px; margin: 0;">Payment Solutions International</p>
+        </div>
+      </div>
+    `,
+  });
+  if (error) {
+    console.error("Resend crypto remittance email error:", error);
+    throw new Error("Failed to send crypto remittance email");
+  }
   return data;
 }

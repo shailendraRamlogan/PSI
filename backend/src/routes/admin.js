@@ -226,7 +226,7 @@ router.post("/:id/request-verification", authMiddleware, adminOnly, async (req, 
 <body style="margin:0;padding:0;background:#0d0f1a;font-family:system-ui,-apple-system,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;">
     <tr><td style="padding:32px 24px;text-align:center;">
-      <div style="font-size:24px;font-weight:700;color:#20aab6;">PSI Platform</div>
+      <img src="https://psi.ourea.tech/images/psi-logo.png" alt="PSI" width="160" style="display:block;margin:0 auto" />
     </td></tr>
     <tr><td style="padding:0 24px;">
       <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:32px;">

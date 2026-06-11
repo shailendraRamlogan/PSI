@@ -103,7 +103,7 @@ function SignupPage() {
       <div className="relative z-10 w-full max-w-[420px] px-6">
         <motion.div custom={0} variants={fadeInUp} initial="hidden" animate="visible" className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <img src="/images/psi-logo-nav.png" alt="PSI" className="h-9 w-auto" />
+            <img src="/images/psi-logo-nav.png" alt="PSI" className="h-20 w-auto" />
           </Link>
           <h1 className="text-2xl font-bold">Create your account</h1>
           <p className="text-white/40 text-[14px] mt-2">Join PSI — it&apos;s free</p>

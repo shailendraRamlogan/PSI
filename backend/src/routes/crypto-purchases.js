@@ -3,6 +3,7 @@ import { authMiddleware } from "../middleware/auth.js";
 import pool from "../db/pool.js";
 import { stripe } from "../lib/stripe.js";
 import eventBus from "../events/eventBus.js";
+import { sendCryptoRemittanceConfirmation } from "../lib/email.js";
 
 const router = Router();
 
@@ -222,6 +223,28 @@ router.patch("/admin/:id/remit", authMiddleware, adminOnly, async (req, res) => 
       );
     } catch (err) {
       console.error("[CryptoPurchases] Audit log error:", err);
+    }
+
+    // Send remittance confirmation email
+    try {
+      const purchase = rows[0];
+      const userRes = await pool.query(`SELECT email, name FROM users WHERE id = $1`, [purchase.user_id]);
+      if (userRes.rows.length > 0) {
+        const user = userRes.rows[0];
+        await sendCryptoRemittanceConfirmation({
+          email: user.email,
+          name: user.name || "Customer",
+          refId: purchase.ref_id,
+          amount: purchase.amount,
+          network: purchase.network,
+          walletAddress: purchase.wallet_address,
+          walletLabel: purchase.wallet_label || null,
+          transactionHash: transaction_hash.trim(),
+        });
+        console.log(`[CryptoPurchases] Remittance email sent to ${user.email} for ref ${purchase.ref_id}`);
+      }
+    } catch (emailErr) {
+      console.error("[CryptoPurchases] Failed to send remittance email:", emailErr);
     }
 
     res.json(formatPurchase(rows[0]));

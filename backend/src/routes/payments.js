@@ -5,6 +5,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
+import { sendEmail } from "../lib/email.js";
 
 const router = Router();
 
@@ -128,6 +129,58 @@ router.post("/", authMiddleware, receiptUpload.single("receipt"), async (req, re
     const request = result.rows[0];
     await appendAudit(request.id, "submitted", req.user.id, "business",
       `Payment of ${currency || "TTD"} ${parseFloat(amount).toFixed(2)} submitted`);
+
+    // Send payment request confirmation email
+    try {
+      await sendEmail({
+        to: req.user.email,
+        subject: `PSI — Payment Request Submitted (${refId})`,
+        html: `
+          <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:480px;margin:0 auto;background:#0d0f1a;border-radius:16px;overflow:hidden;">
+            <div style="padding:40px 32px;">
+              <div style="text-align:center;margin-bottom:32px">
+                <img src="https://psi.ourea.tech/images/psi-logo.png" alt="PSI" width="160" style="display:block;margin:0 auto" />
+              </div>
+              <h1 style="color:#fff;font-size:22px;font-weight:700;margin:0 0 8px;">Payment Request Submitted</h1>
+              <p style="color:rgba(255,255,255,0.5);font-size:14px;line-height:1.6;margin:0 0 28px;">
+                Hi ${req.user.name || "Customer"},<br/>
+                We've received your payment request and will begin processing it shortly.
+              </p>
+              <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;margin:0 0 24px;">
+                <p style="color:rgba(255,255,255,0.4);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px;">Reference</p>
+                <p style="color:#20aab6;font-size:14px;font-weight:600;margin:0 0 16px;">${refId}</p>
+                <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:16px;">
+                  <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                    <span style="color:rgba(255,255,255,0.5);font-size:13px;">Amount</span>
+                    <span style="color:#fff;font-size:14px;font-weight:600;">${currency || "TTD"} ${parseFloat(amount).toFixed(2)}</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                    <span style="color:rgba(255,255,255,0.5);font-size:13px;">Handling Fee</span>
+                    <span style="color:#fff;font-size:14px;">${feePercent}% ($${feeAmount.toFixed(2)})</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;">
+                    <span style="color:rgba(255,255,255,0.5);font-size:13px;">Beneficiary</span>
+                    <span style="color:#fff;font-size:14px;">${beneficiary_company_name}</span>
+                  </div>
+                </div>
+              </div>
+              <p style="color:rgba(255,255,255,0.5);font-size:13px;line-height:1.6;margin:0 0 4px;">Next steps:</p>
+              <ul style="color:rgba(255,255,255,0.5);font-size:13px;line-height:2;padding-left:20px;margin:0 0 24px;">
+                <li>Transfer funds to PSI</li>
+                <li>PSI confirms receipt</li>
+                <li>PSI pays the beneficiary on your behalf</li>
+              </ul>
+              <p style="color:rgba(255,255,255,0.3);font-size:12px;margin:0;">You'll receive email updates at each stage of the process.</p>
+            </div>
+            <div style="padding:16px 32px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+              <p style="color:rgba(255,255,255,0.2);font-size:11px;margin:0;">Payment Solutions International</p>
+            </div>
+          </div>
+        `,
+      });
+    } catch (emailErr) {
+      console.error("[Payments] Failed to send submission email:", emailErr);
+    }
 
     res.status(201).json({
       id: request.id.toString(),
@@ -371,6 +424,53 @@ router.patch("/admin/:id/receive", authMiddleware, adminOnly, async (req, res) =
 
     await appendAudit(id, "marked_received", req.user.id, "admin", "Funds received in PSI account");
 
+    // Send funds received email
+    try {
+      const pr = result.rows[0];
+      const userRes = await pool.query(`SELECT email, name FROM users WHERE id = $1`, [pr.user_id]);
+      if (userRes.rows.length > 0) {
+        const user = userRes.rows[0];
+        await sendEmail({
+          to: user.email,
+          subject: `PSI — Funds Received (${pr.ref_id})`,
+          html: `
+            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:480px;margin:0 auto;background:#0d0f1a;border-radius:16px;overflow:hidden;">
+              <div style="padding:40px 32px;">
+                <div style="text-align:center;margin-bottom:32px">
+                  <img src="https://psi.ourea.tech/images/psi-logo.png" alt="PSI" width="160" style="display:block;margin:0 auto" />
+                </div>
+                <h1 style="color:#20aab6;font-size:22px;font-weight:700;margin:0 0 8px;">Funds Received ✓</h1>
+                <p style="color:rgba(255,255,255,0.5);font-size:14px;line-height:1.6;margin:0 0 28px;">
+                  Hi ${user.name || "Customer"},<br/>
+                  PSI has confirmed receipt of your funds. We are now processing the payment to your beneficiary.
+                </p>
+                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;margin:0 0 24px;">
+                  <p style="color:rgba(255,255,255,0.4);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px;">Reference</p>
+                  <p style="color:#20aab6;font-size:14px;font-weight:600;margin:0 0 16px;">${pr.ref_id}</p>
+                  <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:16px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                      <span style="color:rgba(255,255,255,0.5);font-size:13px;">Amount</span>
+                      <span style="color:#fff;font-size:14px;font-weight:600;">${pr.currency} ${parseFloat(pr.amount).toFixed(2)}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;">
+                      <span style="color:rgba(255,255,255,0.5);font-size:13px;">Beneficiary</span>
+                      <span style="color:#fff;font-size:14px;">${pr.beneficiary_company_name}</span>
+                    </div>
+                  </div>
+                </div>
+                <p style="color:rgba(255,255,255,0.3);font-size:12px;margin:0;">You'll receive a final email once the payment to your beneficiary is complete.</p>
+              </div>
+              <div style="padding:16px 32px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+                <p style="color:rgba(255,255,255,0.2);font-size:11px;margin:0;">Payment Solutions International</p>
+              </div>
+            </div>
+          `,
+        });
+      }
+    } catch (emailErr) {
+      console.error("[Payments] Failed to send received email:", emailErr);
+    }
+
     res.json({ success: true, status: "received" });
   } catch (err) {
     console.error("Mark received error:", err);
@@ -412,6 +512,65 @@ router.patch("/admin/:id/pay", authMiddleware, adminOnly, proofUpload.single("pr
     await appendAudit(id, "marked_paid", req.user.id, "admin",
       `Remitted ${remittance_currency} ${parseFloat(remittance_amount).toFixed(2)} to ${request.beneficiary_company_name}`,
       proofPath);
+
+    // Send payment completed email
+    try {
+      const userRes = await pool.query(`SELECT email, name FROM users WHERE id = $1`, [request.user_id]);
+      if (userRes.rows.length > 0) {
+        const user = userRes.rows[0];
+        const dashboardUrl = `${process.env.FRONTEND_URL || "https://psi.ourea.tech"}/dashboard/payments`;
+        await sendEmail({
+          to: user.email,
+          subject: `PSI — Payment Complete (${request.ref_id})`,
+          html: `
+            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:480px;margin:0 auto;background:#0d0f1a;border-radius:16px;overflow:hidden;">
+              <div style="padding:40px 32px;">
+                <div style="text-align:center;margin-bottom:32px">
+                  <img src="https://psi.ourea.tech/images/psi-logo.png" alt="PSI" width="160" style="display:block;margin:0 auto" />
+                </div>
+                <h1 style="color:#10b981;font-size:22px;font-weight:700;margin:0 0 8px;">Payment Complete ✓</h1>
+                <p style="color:rgba(255,255,255,0.5);font-size:14px;line-height:1.6;margin:0 0 28px;">
+                  Hi ${user.name || "Customer"},<br/>
+                  PSI has successfully paid ${request.beneficiary_company_name} on your behalf.
+                </p>
+                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;margin:0 0 24px;">
+                  <p style="color:rgba(255,255,255,0.4);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px;">Reference</p>
+                  <p style="color:#20aab6;font-size:14px;font-weight:600;margin:0 0 16px;">${request.ref_id}</p>
+                  <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:16px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                      <span style="color:rgba(255,255,255,0.5);font-size:13px;">Your Amount</span>
+                      <span style="color:#fff;font-size:14px;font-weight:600;">${request.currency} ${parseFloat(request.amount).toFixed(2)}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                      <span style="color:rgba(255,255,255,0.5);font-size:13px;">Remitted</span>
+                      <span style="color:#fff;font-size:14px;font-weight:600;">${remittance_currency} ${parseFloat(remittance_amount).toFixed(2)}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;">
+                      <span style="color:rgba(255,255,255,0.5);font-size:13px;">Beneficiary</span>
+                      <span style="color:#fff;font-size:14px;">${request.beneficiary_company_name}</span>
+                    </div>
+                  </div>
+                </div>
+                ${proofPath ? `
+                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;margin:0 0 24px;">
+                  <p style="color:rgba(255,255,255,0.4);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Transfer Proof</p>
+                  <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:0;">A proof of transfer document has been attached to your payment record.</p>
+                </div>
+                ` : ''}
+                <div style="text-align:center;margin-top:24px;">
+                  <a href="${dashboardUrl}" style="display:inline-block;background:#20aab6;color:#fff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 28px;border-radius:50px;">View in Dashboard</a>
+                </div>
+              </div>
+              <div style="padding:16px 32px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+                <p style="color:rgba(255,255,255,0.2);font-size:11px;margin:0;">Payment Solutions International</p>
+              </div>
+            </div>
+          `,
+        });
+      }
+    } catch (emailErr) {
+      console.error("[Payments] Failed to send paid email:", emailErr);
+    }
 
     res.json({ success: true, status: "paid" });
   } catch (err) {

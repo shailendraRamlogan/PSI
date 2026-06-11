@@ -725,7 +725,7 @@ export default function DashboardSection() {
   }, []);
 
   return (
-    <section className="relative py-12 sm:py-16 overflow-hidden bg-[#f8f9fb]">
+    <section className="relative py-12 sm:py-16">
       {/* Section divider glow */}
       <div ref={dividerRef} data-section-glow className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[1px] bg-gradient-to-r from-transparent via-[#20aab6]/30 to-transparent" style={{ willChange: "transform" }} />
 
