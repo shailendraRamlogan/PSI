@@ -127,4 +127,74 @@ router.post("/submit", authMiddleware, async (req, res) => {
   }
 });
 
+// ──────────────────────────────────────────────
+// POST /api/kyc/resubmit
+// ──────────────────────────────────────────────
+router.post("/resubmit", authMiddleware, async (req, res) => {
+  try {
+    const { kycData } = req.body;
+    if (!kycData) {
+      return res.status(400).json({ error: "kycData is required" });
+    }
+
+    // Find user's record with verification_requested status
+    const userResult = await pool.query(
+      "SELECT id, name, email, kyc_data FROM users WHERE id = $1",
+      [req.user.id]
+    );
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const user = userResult.rows[0];
+    const currentKycData = user.kyc_data || {};
+
+    if (currentKycData.status !== "verification_requested") {
+      return res.status(400).json({
+        error: `Cannot resubmit — current status is '${currentKycData.status || 'pending'}'. Resubmission is only allowed when status is 'verification_requested'.`,
+      });
+    }
+
+    // Snapshot current submission data into previous_submission
+    const previousSubmission = { ...currentKycData };
+    delete previousSubmission.previous_submission; // Don't nest previous snapshots
+
+    const resubmissionCount = (currentKycData.resubmission_count || 0) + 1;
+
+    const updatedKycData = {
+      ...kycData,
+      status: "resubmitted",
+      submittedAt: new Date().toISOString(),
+      previous_submission: previousSubmission,
+      resubmission_count: resubmissionCount,
+      // Clear flagged fields and admin notes for fresh evaluation
+      flagged_fields: null,
+      admin_notes: null,
+    };
+
+    await pool.query(
+      "UPDATE users SET kyc_data = $1, updated_at = NOW() WHERE id = $2",
+      [JSON.stringify(updatedKycData), req.user.id]
+    );
+
+    // Write to audit_logs
+    await pool.query(
+      `INSERT INTO audit_logs (user_id, action, entity, entity_id, metadata, ip_address)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [req.user.id, "KYC_RESUBMITTED", "kyc_verification", req.user.id,
+       JSON.stringify({ resubmission_count: resubmissionCount }), req.ip || null]
+    );
+
+    res.json({
+      message: "KYC resubmitted successfully",
+      status: updatedKycData.status,
+      resubmission_count: resubmissionCount,
+      kycData: updatedKycData,
+    });
+  } catch (err) {
+    console.error("KYC resubmit error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;

@@ -17,38 +17,38 @@ const reducedMotion = typeof window !== "undefined" ? window.matchMedia('(prefer
 const cryptoCards = [
   {
     name: "Bitcoin", symbol: "BTC", number: "4716 •••• •••• 8392", holder: "BITCOIN CARD",
-    bg: "from-[#1a1408] via-[#2a1f0a] to-[#0d0a04]", accent: "#F7931A",
-    chipColor: "from-yellow-600 to-amber-700", glowColor: "rgba(247,147,26,0.12)",
+    bg: "from-yellow-600 via-amber-700 to-yellow-800", accent: "#F7931A",
+    chipColor: "from-yellow-500 to-amber-600", glowColor: "rgba(247,147,26,0.25)",
     logoSrc: "/logos/btc.svg", value: 350,
   },
   {
     name: "Ethereum", symbol: "ETH", number: "5283 •••• •••• 1047", holder: "ETHEREUM CARD",
-    bg: "from-[#0d0a1a] via-[#1a1030] to-[#080614]", accent: "#627EEA",
-    chipColor: "from-purple-400 to-indigo-600", glowColor: "rgba(98,126,234,0.12)",
+    bg: "from-slate-400 via-slate-500 to-slate-600", accent: "#627EEA",
+    chipColor: "from-yellow-500 to-amber-600", glowColor: "rgba(148,163,184,0.25)",
     logoSrc: "/logos/eth.svg", value: 500,
   },
   {
     name: "USDT", symbol: "USDT", number: "6011 •••• •••• 5523", holder: "TETHER CARD",
-    bg: "from-[#041a14] via-[#082a1f] to-[#020d0a]", accent: "#26A17B",
-    chipColor: "from-emerald-400 to-teal-600", glowColor: "rgba(38,161,123,0.12)",
+    bg: "from-emerald-500 via-emerald-600 to-emerald-700", accent: "#26A17B",
+    chipColor: "from-yellow-500 to-amber-600", glowColor: "rgba(38,161,123,0.25)",
     logoSrc: "/logos/usdt.svg", value: 250,
   },
   {
     name: "Tron", symbol: "TRX", number: "3742 •••• •••• 9081", holder: "TRON CARD",
-    bg: "from-[#1a0408] via-[#2a0810] to-[#0d0204]", accent: "#EF0027",
-    chipColor: "from-red-500 to-rose-700", glowColor: "rgba(239,0,39,0.12)",
+    bg: "from-red-700 via-red-800 to-red-900", accent: "#EF0027",
+    chipColor: "from-yellow-500 to-amber-600", glowColor: "rgba(239,0,39,0.25)",
     logoSrc: "/logos/trx.svg", value: 100,
   },
   {
     name: "USDC", symbol: "USDC", number: "4556 •••• •••• 3370", holder: "USDC CARD",
-    bg: "from-[#04081a] via-[#081430] to-[#02040d]", accent: "#2775CA",
-    chipColor: "from-blue-400 to-blue-700", glowColor: "rgba(39,117,202,0.12)",
+    bg: "from-blue-500 via-blue-600 to-blue-700", accent: "#2775CA",
+    chipColor: "from-yellow-500 to-amber-600", glowColor: "rgba(39,117,202,0.25)",
     logoSrc: "/logos/usdc.svg", value: 300,
   },
   {
     name: "Trump", symbol: "TRUMP", number: "6331 •••• •••• 7744", holder: "TRUMP CARD",
-    bg: "from-[#1a1008] via-[#0a1030] to-[#0d0804]", accent: "#C7A628",
-    chipColor: "from-yellow-500 to-amber-600", glowColor: "rgba(199,166,40,0.12)",
+    bg: "from-yellow-500 via-amber-600 to-yellow-700", accent: "#C7A628",
+    chipColor: "from-yellow-500 to-amber-600", glowColor: "rgba(199,166,40,0.25)",
     logoSrc: "/logos/trump.svg", value: 200,
   },
 ];
@@ -92,54 +92,46 @@ function CryptoCard({ card, isHovered, onHover, onLeave, shimmerPos }: {
 }) {
   return (
     <div className="relative" style={{ perspective: "800px" }}>
-      <div className="absolute -inset-6 rounded-2xl blur-2xl transition-opacity duration-500"
-        style={{ background: card.glowColor, opacity: isHovered ? 0.9 : 0.25 }} />
-      <div className="absolute -inset-10 rounded-3xl blur-[40px] transition-opacity duration-700"
-        style={{ background: card.glowColor.replace('0.12', '0.06'), opacity: isHovered ? 0.6 : 0.15 }} />
-      <div className="absolute -inset-2 rounded-xl"
-        style={{ boxShadow: isHovered
-          ? `0 20px 40px -8px rgba(0,0,0,0.5), 0 0 30px ${card.accent}20`
-          : `0 8px 24px -4px rgba(0,0,0,0.3), 0 0 12px ${card.accent}08` }} />
-
       <div
         onMouseMove={onHover} onMouseEnter={onHover} onMouseLeave={onLeave}
         className="relative w-[200px] sm:w-[240px] h-[126px] sm:h-[152px] rounded-lg overflow-hidden cursor-pointer transition-transform duration-300"
-        style={{ transformStyle: "preserve-3d", transform: isHovered ? "scale(1.06) translateY(-8px)" : "none" }}
+        style={{ transformStyle: "preserve-3d", transform: isHovered ? "scale(1.06) translateY(-8px)" : "none", boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}
       >
         <div className={`absolute inset-0 bg-gradient-to-br ${card.bg}`} />
+        {/* Top-edge gloss highlight */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
         <div className="absolute inset-0 transition-all duration-300"
-          style={{ background: `radial-gradient(circle at ${shimmerPos.x}% ${shimmerPos.y}%, rgba(255,255,255,0.06), transparent 60%)` }} />
+          style={{ background: `radial-gradient(circle at ${shimmerPos.x}% ${shimmerPos.y}%, rgba(255,255,255,0.12), transparent 60%)` }} />
         <div className="absolute inset-0 opacity-[0.03]"
           style={{ backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.08) 8px, rgba(255,255,255,0.08) 9px)" }} />
 
         <div className="absolute inset-0 z-[2] flex items-center justify-center pointer-events-none">
-          <div className="w-[70px] h-[70px] sm:w-[85px] sm:h-[85px] relative transition-all duration-500"
+          <div className="w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] relative transition-all duration-500"
             style={{
-              opacity: isHovered ? 0.8 : 0.45,
-              filter: isHovered ? `drop-shadow(0 0 10px ${card.accent}40)` : `drop-shadow(0 0 4px ${card.accent}15)`,
+              opacity: 0.15,
             }}>
-            <img src={card.logoSrc} alt="" className="absolute inset-0 w-full h-full scale-105 blur-[1px]" style={{ opacity: 0.2 }} draggable={false} />
             <img src={card.logoSrc} alt={`${card.name} logo`} className="w-full h-full relative" draggable={false} />
           </div>
         </div>
 
         <div className="relative z-10 p-3 sm:p-4 h-full flex flex-col justify-between">
           <div className="flex items-start justify-between">
-            <div className={`w-7 h-5 sm:w-8 sm:h-6 rounded-[3px] bg-gradient-to-br ${card.chipColor} border border-white/10 relative overflow-hidden`}>
-              <div className="absolute inset-x-1.5 top-1/2 h-[0.5px] bg-black/20" />
-              <div className="absolute inset-y-1 left-1/2 w-[0.5px] bg-black/20" />
+            <div className={`w-7 h-5 sm:w-8 sm:h-6 rounded-[3px] bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-600 border border-yellow-700/50 relative overflow-hidden shadow-[inset_0_1px_2px_rgba(255,255,255,0.3)]`}>
+              <div className="absolute inset-x-1.5 top-1/2 h-[0.5px] bg-amber-800/40" />
+              <div className="absolute inset-y-1 left-1/2 w-[0.5px] bg-amber-800/40" />
+              <div className="absolute inset-x-1.5 top-[30%] h-[0.5px] bg-amber-800/40" />
+              <div className="absolute inset-y-1 left-[35%] w-[0.5px] bg-amber-800/40" />
             </div>
             <div className="flex flex-col items-end">
-              <span className="text-base sm:text-lg font-black tracking-tighter" style={{ color: card.accent }}>{card.symbol}</span>
-              <span className="text-[6px] sm:text-[7px] text-white/25 uppercase tracking-widest font-medium -mt-0.5">{card.name}</span>
+              <span className="text-base sm:text-lg font-black tracking-tighter text-white/90">{card.symbol}</span>
+              <span className="text-[6px] sm:text-[7px] text-white/50 uppercase tracking-widest font-medium -mt-0.5">{card.name}</span>
             </div>
           </div>
           <div>
-            <p className="text-white/50 text-[9px] sm:text-[10px] font-mono tracking-[0.1em] mb-1">{card.number}</p>
+            <p className="text-white/70 text-[9px] sm:text-[10px] font-mono tracking-[0.1em] mb-1">{card.number}</p>
             <div className="flex items-end justify-between">
-              <p className="text-[6px] sm:text-[7px] text-white/30 uppercase tracking-[0.12em] font-medium">{card.holder}</p>
-              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center text-[5px] sm:text-[6px] font-bold text-white/60 border"
-                style={{ borderColor: `${card.accent}33`, background: `${card.accent}11` }}>PSI</div>
+              <p className="text-[6px] sm:text-[7px] text-white/40 uppercase tracking-[0.12em] font-medium">{card.holder}</p>
+              <span className="text-[6px] sm:text-[7px] text-white/50 font-semibold tracking-wider">PSI</span>
             </div>
           </div>
         </div>
@@ -147,16 +139,6 @@ function CryptoCard({ card, isHovered, onHover, onLeave, shimmerPos }: {
         <div className="absolute inset-0 pointer-events-none"
           style={{ background: "linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.07) 45%, rgba(255,255,255,0.02) 55%, transparent 65%)", backgroundSize: "250% 100%" }} />
         <div className="absolute inset-0 rounded-lg border border-white/[0.08] pointer-events-none" />
-        <div className="absolute top-0 left-[15%] right-[15%] h-[1px] pointer-events-none"
-          style={{ background: `linear-gradient(90deg, transparent, ${card.accent}30, rgba(255,255,255,0.08), ${card.accent}30, transparent)` }} />
-        <div className="absolute top-[10%] bottom-[20%] left-0 w-[1px] pointer-events-none"
-          style={{ background: `linear-gradient(180deg, ${card.accent}25, transparent, rgba(255,255,255,0.06), transparent)` }} />
-        <div className="absolute bottom-0 left-[10%] right-[10%] h-[1px]"
-          style={{ background: `linear-gradient(90deg, transparent, ${card.accent}40, transparent)` }} />
-        <div className="absolute inset-0 pointer-events-none rounded-lg overflow-hidden">
-          <div className="absolute -top-1/2 -left-1/4 w-[150%] h-full opacity-[0.04]"
-            style={{ background: "conic-gradient(from 200deg, transparent 40%, rgba(255,255,255,0.3) 50%, transparent 60%)" }} />
-        </div>
       </div>
     </div>
   );
@@ -448,41 +430,39 @@ function RedemptionOverlay({ card, phase }: {
 /* ─── Mobile Card (85vw, max 340px, 180px tall) ─── */
 function MobileCryptoCard({ card }: { card: typeof cryptoCards[0] }) {
   return (
-    <div className="relative w-[85vw] max-w-[340px] h-[180px] rounded-lg overflow-hidden" style={{ perspective: "800px" }}>
+    <div className="relative w-[85vw] max-w-[340px] h-[180px] rounded-lg overflow-hidden" style={{ perspective: "800px", boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}>
       <div className={`absolute inset-0 bg-gradient-to-br ${card.bg}`} />
       <div className="absolute inset-0 opacity-[0.03]"
         style={{ backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.08) 8px, rgba(255,255,255,0.08) 9px)" }} />
       {/* Logo watermark */}
       <div className="absolute inset-0 z-[2] flex items-center justify-center pointer-events-none">
-        <div className="w-[70px] h-[70px] relative" style={{ opacity: 0.45, filter: `drop-shadow(0 0 4px ${card.accent}15)` }}>
-          <img src={card.logoSrc} alt="" className="absolute inset-0 w-full h-full scale-105 blur-[1px]" style={{ opacity: 0.2 }} draggable={false} />
+        <div className="w-[80px] h-[80px] relative" style={{ opacity: 0.15 }}>
           <img src={card.logoSrc} alt={`${card.name} logo`} className="w-full h-full relative" draggable={false} />
         </div>
       </div>
       {/* Content */}
       <div className="relative z-10 p-4 h-full flex flex-col justify-between">
         <div className="flex items-start justify-between">
-          <div className={`w-7 h-5 rounded-[3px] bg-gradient-to-br ${card.chipColor} border border-white/10 relative overflow-hidden`}>
-            <div className="absolute inset-x-1.5 top-1/2 h-[0.5px] bg-black/20" />
-            <div className="absolute inset-y-1 left-1/2 w-[0.5px] bg-black/20" />
+          <div className="w-7 h-5 rounded-[3px] bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-600 border border-yellow-700/50 relative overflow-hidden shadow-[inset_0_1px_2px_rgba(255,255,255,0.3)]">
+            <div className="absolute inset-x-1.5 top-1/2 h-[0.5px] bg-amber-800/40" />
+            <div className="absolute inset-y-1 left-1/2 w-[0.5px] bg-amber-800/40" />
+            <div className="absolute inset-x-1.5 top-[30%] h-[0.5px] bg-amber-800/40" />
+            <div className="absolute inset-y-1 left-[35%] w-[0.5px] bg-amber-800/40" />
           </div>
           <div className="flex flex-col items-end">
-            <span className="text-base font-black tracking-tighter" style={{ color: card.accent }}>{card.symbol}</span>
-            <span className="text-[6px] text-white/25 uppercase tracking-widest font-medium -mt-0.5">{card.name}</span>
+            <span className="text-base font-black tracking-tighter text-white/90">{card.symbol}</span>
+            <span className="text-[6px] text-white/50 uppercase tracking-widest font-medium -mt-0.5">{card.name}</span>
           </div>
         </div>
         <div>
-          <p className="text-white/50 text-[10px] font-mono tracking-[0.1em] mb-1">{card.number}</p>
+          <p className="text-white/70 text-[10px] font-mono tracking-[0.1em] mb-1">{card.number}</p>
           <div className="flex items-end justify-between">
-            <p className="text-[7px] text-white/30 uppercase tracking-[0.12em] font-medium">{card.holder}</p>
-            <div className="w-4 h-4 rounded-full flex items-center justify-center text-[5px] font-bold text-white/60 border"
-              style={{ borderColor: `${card.accent}33`, background: `${card.accent}11` }}>PSI</div>
+            <p className="text-[7px] text-white/40 uppercase tracking-[0.12em] font-medium">{card.holder}</p>
+            <span className="text-[6px] text-white/50 font-semibold tracking-wider">PSI</span>
           </div>
         </div>
       </div>
       <div className="absolute inset-0 rounded-lg border border-white/[0.08] pointer-events-none" />
-      <div className="absolute bottom-0 left-[10%] right-[10%] h-[1px]"
-        style={{ background: `linear-gradient(90deg, transparent, ${card.accent}40, transparent)` }} />
     </div>
   );
 }
@@ -928,7 +908,7 @@ function AnimatedCarousel() {
           zIndex: 10,
           transition: "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
           filter: "none",
-          boxShadow: `0 0 30px ${card.accent}40, 0 0 60px ${card.accent}20`,
+          boxShadow: `0 8px 32px rgba(0,0,0,0.3), 0 0 20px ${card.accent}30`,
           border: `2px solid ${card.accent}`,
           borderRadius: "0.5rem",
         };
@@ -1181,7 +1161,7 @@ function AnimatedCarousel() {
                   transform: "translate(-50%, -50%)",
                   zIndex: 10,
                   transition: "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                  boxShadow: `0 0 30px ${card.accent}40, 0 0 60px ${card.accent}20`,
+                  boxShadow: `0 8px 32px rgba(0,0,0,0.3), 0 0 20px ${card.accent}30`,
                   border: `2px solid ${card.accent}`,
                   borderRadius: "0.5rem",
                   pointerEvents: "auto",

@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth-store";
 import Link from "next/link";
+import { useTableFilters } from "@/hooks/useTableFilters";
+import TableFilters from "@/components/ui/TableFilters";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api";
 
@@ -164,6 +166,13 @@ export default function AdminUsersPage() {
   const [jurisdictionFilter, setJurisdictionFilter] = useState("all");
   const [page, setPage] = useState(1);
   const limit = 20;
+
+  // Client-side date filter (applied on top of server-fetched data)
+  const { filteredData, searchTerm: filterSearch, setSearchTerm: setFilterSearch, fromDate, setFromDate, toDate, setToDate, clearFilters, hasActiveFilters } = useTableFilters({
+    data: rows,
+    searchFields: [], // search is server-side already
+    dateField: "created_at",
+  });
 
   // Detail drawer
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -350,25 +359,68 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
+      {/* ── Date Range Filter ── */}
+      <div className="px-6 flex items-center gap-3 mb-2">
+        <input
+          type="date"
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+          placeholder="From date"
+          className="h-10 w-40 px-3 py-2 bg-fill-subtle/50 border border-border-default rounded-lg text-sm text-text-secondary placeholder:text-text-phantom focus:outline-none focus:border-accent/50 flex-shrink-0"
+          style={{ colorScheme: "dark" }}
+        />
+        <input
+          type="date"
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+          placeholder="To date"
+          className="h-10 w-40 px-3 py-2 bg-fill-subtle/50 border border-border-default rounded-lg text-sm text-text-secondary placeholder:text-text-phantom focus:outline-none focus:border-accent/50 flex-shrink-0"
+          style={{ colorScheme: "dark" }}
+        />
+        {hasActiveFilters && (
+          <button
+            onClick={clearFilters}
+            className="h-10 px-3 text-sm text-text-muted hover:text-text-primary whitespace-nowrap flex-shrink-0 flex items-center gap-1.5"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Clear
+          </button>
+        )}
+      </div>
+
       {/* ── Table ── */}
       <div className="flex-1 overflow-auto px-6">
         {loading && rows.length === 0 ? (
           <div className="flex items-center justify-center h-48">
             <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           </div>
-        ) : rows.length === 0 ? (
-          <div className="flex items-center justify-center h-48 text-text-dim text-sm">No users found</div>
+        ) : filteredData.length === 0 ? (
+          hasActiveFilters ? (
+            <div className="flex flex-col items-center justify-center h-48 text-text-dim text-sm">
+              <p>No users match the current filters</p>
+              <button onClick={clearFilters} className="mt-2 text-xs text-accent hover:underline">Clear filters</button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-48 text-text-dim text-sm">No users found</div>
+          )
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border-default">
-                {["User", "Role", "KYC", "Jurisdiction", "Status", "Joined", ""].map((h) => (
-                  <th key={h} className={`text-left py-3 px-2 text-[11px] font-medium text-text-phantom uppercase tracking-wider ${h === "" ? "text-right" : ""}`}>{h}</th>
-                ))}
-              </tr>
-            </thead>
+          <div className="overflow-x-auto w-full [touch-action:pan-x]">
+            <table className="w-full text-sm whitespace-nowrap">
+              <thead>
+                <tr className="border-b border-border-default">
+                  <th className="text-left py-3 px-2 text-[11px] font-medium text-text-phantom uppercase tracking-wider">User</th>
+                  <th className="text-left py-3 px-2 text-[11px] font-medium text-text-phantom uppercase tracking-wider hidden md:table-cell">Role</th>
+                  <th className="text-left py-3 px-2 text-[11px] font-medium text-text-phantom uppercase tracking-wider hidden md:table-cell">KYC</th>
+                  <th className="text-left py-3 px-2 text-[11px] font-medium text-text-phantom uppercase tracking-wider hidden lg:table-cell">Jurisdiction</th>
+                  <th className="text-left py-3 px-2 text-[11px] font-medium text-text-phantom uppercase tracking-wider">Status</th>
+                  <th className="text-left py-3 px-2 text-[11px] font-medium text-text-phantom uppercase tracking-wider hidden md:table-cell">Joined</th>
+                  <th className="text-right py-3 px-2 text-[11px] font-medium text-text-phantom uppercase tracking-wider hidden lg:table-cell"></th>
+                </tr>
+              </thead>
             <tbody>
-              {rows.map((row) => (
+              {filteredData.map((row) => (
                 <motion.tr key={row.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }}
                   className={`border-b border-border-subtle cursor-pointer transition-colors ${
                     row.status === "suspended"
@@ -391,26 +443,27 @@ export default function AdminUsersPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="py-3 px-2"><span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${roleBadge(row.role)}`}>{row.role}</span></td>
-                  <td className="py-3 px-2">
+                  <td className="py-3 px-2 hidden md:table-cell"><span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${roleBadge(row.role)}`}>{row.role}</span></td>
+                  <td className="py-3 px-2 hidden md:table-cell">
                     <div className="flex items-center gap-1.5">
                       <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${statusBadge(row.kyc.status || 'pending')}`}>{row.kyc.status || "pending"}</span>
                     </div>
                   </td>
-                  <td className="py-3 px-2 text-text-dim">{row.jurisdiction}</td>
+                  <td className="py-3 px-2 text-text-dim hidden lg:table-cell">{row.jurisdiction}</td>
                   <td className="py-3 px-2">
                     {row.status === "suspended"
                       ? <span className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-red-400/10 text-red-400 inset-ring inset-ring-red-400/20">Suspended</span>
                       : <span className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-emerald-400/10 text-emerald-400 inset-ring inset-ring-emerald-400/20">Active</span>}
                   </td>
-                  <td className="py-3 px-2 text-text-dim">{fmtDateShort(row.created_at)}</td>
-                  <td className="py-3 px-2 text-right">
+                  <td className="py-3 px-2 text-text-dim hidden md:table-cell">{fmtDateShort(row.created_at)}</td>
+                  <td className="py-3 px-2 text-right hidden lg:table-cell">
                     <span className="text-[12px] text-text-phantom">→</span>
                   </td>
                 </motion.tr>
               ))}
             </tbody>
-          </table>
+            </table>
+          </div>
         )}
       </div>
 
@@ -569,12 +622,33 @@ export default function AdminUsersPage() {
                           <div>
                             <p className="text-[11px] text-text-phantom uppercase tracking-wider mb-2">Submitted Documents</p>
                             <div className="space-y-1.5">
-                              {detail.documents.map((doc) => (
+                              {detail.documents.map((doc) => {
+                                const docIsPDF = (doc.mime_type === 'application/pdf') || (doc.filename || '').toLowerCase().endsWith('.pdf');
+                                const docExt = (doc.filename || '').split('.').pop()?.toUpperCase() || '';
+                                return (
                                 <div key={doc.id} className="flex items-center justify-between bg-surface-2 rounded-lg px-3 py-2.5">
                                   <div className="flex items-center gap-2 min-w-0">
-                                    <svg className="w-4 h-4 text-text-phantom shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                                    </svg>
+                                    <div className="relative shrink-0">
+                                      {docIsPDF ? (
+                                        <a href={`/api/admin/kyc/documents/${doc.id}`} target="_blank" rel="noopener noreferrer" className="block" title="Click to open PDF">
+                                          <div className="w-9 h-9 rounded-lg bg-fill-subtle flex items-center justify-center hover:bg-red-500/10 transition-colors">
+                                            <svg className="w-4 h-4 text-text-phantom" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                            </svg>
+                                          </div>
+                                          <span className="absolute -top-1.5 -right-1.5 text-[7px] font-bold bg-red-500/80 text-white px-1 py-0.5 rounded leading-none">PDF</span>
+                                        </a>
+                                      ) : (
+                                        <div className="w-9 h-9 rounded-lg bg-fill-subtle flex items-center justify-center">
+                                          <svg className="w-4 h-4 text-text-phantom" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                          </svg>
+                                          {docExt && (
+                                            <span className="absolute -top-1.5 -right-1.5 text-[7px] font-bold bg-white/10 text-text-dim px-1 py-0.5 rounded leading-none">{docExt}</span>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
                                     <div className="min-w-0">
                                       <p className="text-[12px] text-white truncate">{doc.doc_label || docTypeLabel(doc.doc_type)}</p>
                                       <p className="text-[10px] text-text-phantom">{doc.filename || doc.doc_type} · {fmtSize(doc.file_size)}</p>
@@ -582,7 +656,8 @@ export default function AdminUsersPage() {
                                   </div>
                                   <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium shrink-0 ${statusBadge(doc.status)}`}>{doc.status}</span>
                                 </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </div>
                         )}

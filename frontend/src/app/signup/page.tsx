@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useAuth, UserService } from "@/lib/auth-store";
@@ -31,14 +31,28 @@ const cardSelected: React.CSSProperties = {
   boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06), 0 0 20px rgba(32,170,182,0.15)",
 };
 
-export default function SignupPage() {
+export default function SignupPageWrapper() {
+  return (
+    <Suspense>
+      <SignupPage />
+    </Suspense>
+  );
+}
+
+function SignupPage() {
   const router = useRouter();
   const { signup } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const searchParams = useSearchParams();
   const [role, setRole] = useState<"individual" | "business" | null>(null);
+
+  useEffect(() => {
+    const type = searchParams.get("type");
+    if (type === "individual" || type === "business") setRole(type);
+  }, [searchParams]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -89,10 +103,7 @@ export default function SignupPage() {
       <div className="relative z-10 w-full max-w-[420px] px-6">
         <motion.div custom={0} variants={fadeInUp} initial="hidden" animate="visible" className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-9 h-9 rounded-lg bg-[#20aab6] flex items-center justify-center font-bold text-white text-sm">
-              P
-            </div>
-            <span className="text-white font-semibold text-lg tracking-wide">PSI</span>
+            <img src="/images/psi-logo-nav.png" alt="PSI" className="h-9 w-auto" />
           </Link>
           <h1 className="text-2xl font-bold">Create your account</h1>
           <p className="text-white/40 text-[14px] mt-2">Join PSI — it&apos;s free</p>
@@ -197,7 +208,7 @@ export default function SignupPage() {
             disabled={loading}
             whileHover={loading ? {} : { scale: 1.02, y: -1 }}
             whileTap={loading ? {} : { scale: 0.98 }}
-            className="w-full relative overflow-hidden px-6 py-3 rounded-full text-[15px] font-semibold text-white bg-[#20aab6] shadow-[0_0_20px_rgba(32,170,182,0.25)] hover:shadow-[0_0_30px_rgba(32,170,182,0.35)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full relative overflow-hidden px-6 py-3 rounded-full text-[15px] font-semibold text-white bg-gradient-accent shadow-[0_0_20px_rgba(32,170,182,0.25)] hover:shadow-[0_0_30px_rgba(32,170,182,0.35)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">

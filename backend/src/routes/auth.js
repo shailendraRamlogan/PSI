@@ -30,6 +30,19 @@ function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
+/** Return a lightweight kyc_data summary (step, status, rejectionReason only).
+ *  Full kyc_data with base64 documents is available at GET /api/auth/kyc. */
+function kycSummary(kycData) {
+  if (!kycData) return null;
+  return {
+    step: kycData.step ?? null,
+    status: kycData.status ?? null,
+    rejectionReason: kycData.rejectionReason ?? null,
+    submittedAt: kycData.submittedAt ?? null,
+    reviewedAt: kycData.reviewedAt ?? null,
+  };
+}
+
 /** Issue both tokens and store the refresh token hash in DB.
  *  Also sets httpOnly cookies on the response. */
 async function issueTokens(user, res) {
@@ -92,7 +105,7 @@ router.post("/signup", async (req, res) => {
     const tokens = await issueTokens(user, res);
 
     res.status(201).json({
-      user: { id: user.id, name: user.name, email: user.email, role: user.role, jurisdiction: user.jurisdiction, email_verified: user.email_verified, kyc_data: user.kyc_data },
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, jurisdiction: user.jurisdiction, email_verified: user.email_verified, kyc_data: kycSummary(user.kyc_data) },
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
     });
@@ -130,7 +143,7 @@ router.post("/login", async (req, res) => {
     const tokens = await issueTokens(user, res);
 
     res.json({
-      user: { id: user.id, name: user.name, email: user.email, role: user.role, jurisdiction: user.jurisdiction, email_verified: user.email_verified, kyc_data: user.kyc_data },
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, jurisdiction: user.jurisdiction, email_verified: user.email_verified, kyc_data: kycSummary(user.kyc_data) },
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
     });
@@ -436,7 +449,13 @@ router.get("/me", authMiddleware, async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "User not found" });
     }
-    res.json({ user: result.rows[0] });
+    const row = result.rows[0];
+    res.json({
+      user: {
+        ...row,
+        kyc_data: kycSummary(row.kyc_data),
+      },
+    });
   } catch (err) {
     console.error("Me error:", err);
     res.status(500).json({ error: "Internal server error" });

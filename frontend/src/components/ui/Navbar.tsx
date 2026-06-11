@@ -35,12 +35,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 sm:h-18">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="relative w-9 h-9 rounded-lg bg-[#20aab6] flex items-center justify-center font-bold text-white text-sm overflow-hidden group-hover:shadow-lg group-hover:shadow-[#20aab6]/20 transition-shadow duration-300">
-              P
-            </div>
-            <span className="text-white font-semibold text-lg tracking-wide">
-              PSI
-            </span>
+            <img src="/images/psi-logo-nav.png" alt="PSI" className="h-9 w-auto" />
           </Link>
 
           {/* Center links — desktop */}

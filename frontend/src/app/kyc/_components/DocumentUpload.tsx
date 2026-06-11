@@ -7,12 +7,15 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 interface DocumentUploadProps {
   label: string;
-  accept: string; // e.g. ".jpg,.png,.pdf"
+  accept: string;
   maxSizeMB: number;
   onUpload: (file: File, previewUrl: string) => void;
   required: boolean;
-  /** Optional: pass in an existing filename to show already-uploaded state */
   initialFileName?: string;
+  /** When true: red dashed border, "re-upload" label, clear preview */
+  flagged?: boolean;
+  /** When true: green border, checkmark overlay, "accepted" label, no remove */
+  accepted?: boolean;
 }
 
 export default function DocumentUpload({
@@ -22,6 +25,8 @@ export default function DocumentUpload({
   onUpload,
   required,
   initialFileName,
+  flagged,
+  accepted,
 }: DocumentUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -29,7 +34,7 @@ export default function DocumentUpload({
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [uploaded, setUploaded] = useState<UploadedState | null>(
-    initialFileName ? { name: initialFileName, type: "image", preview: null } : null
+    initialFileName && !flagged ? { name: initialFileName, type: "image", preview: null } : null
   );
 
   interface UploadedState {
@@ -50,11 +55,13 @@ export default function DocumentUpload({
             (a === ".jpg" && file.type === "image/jpeg") ||
             (a === ".jpeg" && file.type === "image/jpeg") ||
             (a === ".png" && file.type === "image/png") ||
+            (a === ".webp" && file.type === "image/webp") ||
+            (a === ".gif" && file.type === "image/gif") ||
             (a === ".pdf" && file.type === "application/pdf")
         ) || acceptList.includes(ext);
 
       if (!mimeOk) {
-        return `Invalid file type. Accepted: ${accept}`;
+        return "Only images and PDF files are accepted";
       }
       if (file.size > maxSizeMB * 1024 * 1024) {
         return `File too large. Max ${maxSizeMB}MB`;
@@ -75,7 +82,6 @@ export default function DocumentUpload({
       setUploading(true);
       setProgress(0);
 
-      // Build preview for images
       let preview: string | null = null;
       const isImage = file.type.startsWith("image/");
       if (isImage) {
@@ -86,7 +92,6 @@ export default function DocumentUpload({
         reader.readAsDataURL(file);
       }
 
-      // Upload via multipart/form-data with progress tracking
       const formData = new FormData();
       formData.append("file", file);
 
@@ -142,7 +147,6 @@ export default function DocumentUpload({
   const handleSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files?.[0]) doUpload(e.target.files[0]);
-      // Reset input so same file can be re-selected
       e.target.value = "";
     },
     [doUpload]
@@ -187,7 +191,9 @@ export default function DocumentUpload({
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
             className={`relative border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200 ${
-              dragOver
+              flagged
+                ? "border-red-500 bg-red-500/5"
+                : dragOver
                 ? "border-[#20aab6]/60 bg-[#20aab6]/5 scale-[1.01]"
                 : error
                 ? "border-red-500/40"
@@ -271,19 +277,36 @@ export default function DocumentUpload({
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 flex items-center gap-3"
+            className={`rounded-xl p-3 flex items-center gap-3 ${
+              accepted
+                ? "bg-emerald-500/5 border border-emerald-500/30"
+                : "bg-white/[0.03] border border-white/[0.08]"
+            }`}
           >
             {/* Thumbnail or PDF icon */}
             {uploaded.type === "image" && uploaded.preview ? (
-              <img
-                src={uploaded.preview}
-                alt=""
-                className="w-11 h-11 rounded-lg object-cover border border-white/[0.08] shrink-0"
-              />
+              <div className="relative shrink-0">
+                <img
+                  src={uploaded.preview}
+                  alt=""
+                  className={`w-11 h-11 rounded-lg object-cover shrink-0 ${
+                    accepted ? "border border-emerald-500/30" : "border border-white/[0.08]"
+                  }`}
+                />
+                {accepted && (
+                  <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                  </div>
+                )}
+              </div>
             ) : (
-              <div className="w-11 h-11 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0">
+              <div className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${
+                accepted ? "bg-emerald-500/10" : "bg-white/[0.06]"
+              }`}>
                 <svg
-                  className="w-5 h-5 text-white/25"
+                  className={`w-5 h-5 ${accepted ? "text-emerald-400" : "text-white/25"}`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -292,7 +315,7 @@ export default function DocumentUpload({
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+                    d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
               </div>
@@ -302,7 +325,6 @@ export default function DocumentUpload({
             <div className="flex-1 min-w-0">
               <p className="text-[13px] text-white/70 truncate">{uploaded.name}</p>
               <div className="flex items-center gap-1 mt-0.5">
-                {/* Green checkmark */}
                 <svg
                   className="w-3.5 h-3.5 text-emerald-400"
                   fill="none"
@@ -312,28 +334,37 @@ export default function DocumentUpload({
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                 </svg>
-                <span className="text-[11px] text-emerald-400/70">Uploaded</span>
+                <span className={`text-[11px] ${accepted ? "text-emerald-400" : "text-emerald-400/70"}`}>
+                  {accepted ? "Previously accepted — no action needed" : "Uploaded"}
+                </span>
               </div>
             </div>
 
-            {/* Remove button */}
-            <button
-              onClick={remove}
-              className="text-white/20 hover:text-red-400 transition-colors shrink-0 p-1"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.5}
+            {/* Remove button — hidden when accepted */}
+            {!accepted && (
+              <button
+                onClick={remove}
+                className="text-white/20 hover:text-red-400 transition-colors shrink-0 p-1"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Flagged document notice */}
+      {flagged && !uploaded && (
+        <p className="text-red-400 text-[11px] mt-1.5">This document needs to be re-uploaded</p>
+      )}
 
       {/* Inline error */}
       <AnimatePresence>

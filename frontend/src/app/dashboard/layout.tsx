@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "./_components/Sidebar";
+import { useSidebar } from "@/hooks/useSidebar";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api";
 
@@ -76,6 +77,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     router.replace("/login");
   };
 
+  const sidebar = useSidebar();
+
   const pageTitle = pageTitles[pathname] || "Dashboard";
 
   // ── Conditional renders (no hooks below this line) ──
@@ -128,16 +131,31 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
-      <aside className="w-64 shrink-0 border-r border-border-default bg-surface-1 flex flex-col">
-        <Sidebar />
-      </aside>
+      {/* Sidebar — component owns its own width and overlay behavior */}
+      <Sidebar isOpen={sidebar.isOpen} isMobile={sidebar.isMobile} onClose={sidebar.close} onToggle={sidebar.toggle} />
 
-      {/* Main area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* Main area — layout animation syncs with sidebar width */}
+      <motion.div
+        layout
+        layoutDependency={sidebar.isOpen}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="flex-1 flex flex-col min-w-0"
+      >
         {/* Header */}
         <header className="h-16 border-b border-border-default flex items-center justify-between px-6 bg-surface-0">
-          <h1 className="text-sm font-medium text-text-dim">{pageTitle}</h1>
+          <div className="flex items-center gap-3">
+            {/* Hamburger — mobile only */}
+            <button
+              onClick={sidebar.toggle}
+              className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg text-text-muted hover:text-white hover:bg-fill-faint transition-colors"
+              aria-label="Toggle sidebar"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+            </button>
+            <h1 className="text-sm font-medium text-text-dim">{pageTitle}</h1>
+          </div>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-accent-fill flex items-center justify-center text-accent text-xs font-bold">
               {user?.name?.[0]?.toUpperCase() || "U"}
@@ -149,7 +167,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <main className="flex-1 overflow-auto">
           {children}
         </main>
-      </div>
+      </motion.div>
     </div>
   );
 }

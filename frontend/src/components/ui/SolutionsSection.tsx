@@ -10,71 +10,48 @@ if (typeof window !== "undefined") {
 }
 
 const solutions = [
-  {
-    title: "Import & Export",
-    icon: "📦",
-  },
-  {
-    title: "Supply Chain Procurement",
-    icon: "🔗",
-  },
-  {
-    title: "Manufacturing",
-    icon: "🏭",
-  },
-  {
-    title: "Hardware",
-    icon: "⚙️",
-  },
-  {
-    title: "Finance & Fintech",
-    icon: "💎",
-  },
-  {
-    title: "Real Estate",
-    icon: "🏗️",
-  },
-  {
-    title: "Construction & Development",
-    icon: "🏗",
-  },
-  {
-    title: "Casino & Gaming",
-    icon: "🎰",
-  },
-  {
-    title: "E-Commerce",
-    icon: "🛒",
-  },
-  {
-    title: "Retail",
-    icon: "🏪",
-  },
-  {
-    title: "Investments",
-    icon: "📈",
-  },
-  {
-    title: "Personalized Liquidity",
-    icon: "🌊",
-  },
+  { title: "Import & Export", icon: "📦", image: "/images/industries/import-export.png" },
+  { title: "Supply Chain Procurement", icon: "🔗", image: "/images/industries/supply-chain.png" },
+  { title: "Hardware", icon: "⚙️", image: "/images/industries/hardware.png" },
+  { title: "Finance & Fintech", icon: "💎", image: "/images/industries/finance-fintech.png" },
+  { title: "Real Estate", icon: "🏗️", image: "/images/industries/real-estate.png" },
+  { title: "Construction & Development", icon: "🏗", image: "/images/industries/construction.png" },
+  { title: "Casino & Gaming", icon: "🎰", image: "/images/industries/casino-gaming.png" },
+  { title: "E-Commerce", icon: "🛒", image: "/images/industries/ecommerce.png" },
+  { title: "Retail", icon: "🏪", image: "/images/industries/retail.png" },
+  { title: "Investments", icon: "📈", image: "/images/industries/investments.png" },
 ];
 
 /* ─── Marquee Item ─── */
 function MarqueeItem({ solution }: { solution: (typeof solutions)[0] }) {
   return (
     <div
-      className="group flex flex-col items-center gap-2.5 cursor-pointer"
-      style={{ minWidth: "160px", padding: "0 24px" }}
+      className="group flex flex-col items-center cursor-pointer"
+      style={{ minWidth: "180px", padding: "0 20px" }}
     >
+      <div className="relative w-28 h-28 flex items-center justify-center overflow-hidden rounded-xl transition-transform duration-200 group-hover:scale-105 border border-white/10">
+        <img
+                    src={solution.image}
+          alt={solution.title}
+          className="w-28 h-28 object-cover"
+          onError={(e) => {
+            const target = e.currentTarget;
+            const fallback = target.nextElementSibling as HTMLElement;
+            if (fallback) {
+              target.style.display = "none";
+              fallback.style.display = "flex";
+            }
+          }}
+        />
+        <span
+          className="hidden items-center justify-center"
+          style={{ fontSize: "48px", lineHeight: 1 }}
+        >
+          {solution.icon}
+        </span>
+      </div>
       <span
-        className="block transition-transform duration-200 group-hover:scale-110"
-        style={{ fontSize: "40px", lineHeight: 1 }}
-      >
-        {solution.icon}
-      </span>
-      <span
-        className="whitespace-nowrap transition-colors duration-200 group-hover:text-white"
+        className="mt-3 whitespace-nowrap transition-colors duration-200 group-hover:text-white"
         style={{ fontSize: "13px", color: "rgba(255,255,255,0.7)" }}
       >
         {solution.title}

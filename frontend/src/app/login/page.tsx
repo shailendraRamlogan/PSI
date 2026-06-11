@@ -25,6 +25,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [adminRedirect, setAdminRedirect] = useState(false);
   const [onPanel, setOnPanel] = useState(false);
 
   useEffect(() => {
@@ -57,6 +58,18 @@ export default function LoginPage() {
         return;
       }
 
+      // User site: reject admins and redirect to admin panel
+      if (!onPanel && user.role === "admin") {
+        // Clear cookies server-side
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/auth/logout`, {
+          method: "POST",
+          credentials: "include",
+        });
+        sessionStorage.removeItem("psi_user");
+        setAdminRedirect(true);
+        return;
+      }
+
       // Commit session to client storage (after all checks pass)
       UserService.setUser(user);
       router.push(onPanel ? "/admin" : "/dashboard");
@@ -80,10 +93,7 @@ export default function LoginPage() {
         {/* Logo + heading */}
         <motion.div custom={0} variants={fadeInUp} initial="hidden" animate="visible" className="text-center mb-10">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-9 h-9 rounded-lg bg-[#20aab6] flex items-center justify-center font-bold text-white text-sm">
-              P
-            </div>
-            <span className="text-white font-semibold text-lg tracking-wide">PSI</span>
+            <img src="/images/psi-logo-nav.png" alt="PSI" className="h-9 w-auto" />
           </Link>
           <h1 className="text-2xl font-bold">{onPanel ? "Admin Portal" : "Welcome back"}</h1>
           <p className="text-white/40 text-[14px] mt-2">{onPanel ? "Sign in with your admin credentials" : "Sign in to your PSI account"}</p>
@@ -95,7 +105,17 @@ export default function LoginPage() {
           onSubmit={handleSubmit}
           className="space-y-5"
         >
-          {error && (
+          {adminRedirect ? (
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3 text-sm text-amber-400">
+              <p>This account is an admin account. Please log in at psi-panel.ourea.tech</p>
+              <a
+                href="https://psi-panel.ourea.tech/login"
+                className="inline-block mt-2 text-[#20aab6] hover:underline text-sm"
+              >
+                Go to Admin Panel →
+              </a>
+            </div>
+          ) : error && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-sm text-red-400">
               {error}
             </div>
@@ -136,7 +156,7 @@ export default function LoginPage() {
             disabled={loading}
             whileHover={loading ? {} : { scale: 1.02, y: -1 }}
             whileTap={loading ? {} : { scale: 0.98 }}
-            className="w-full relative overflow-hidden px-6 py-3 rounded-full text-[15px] font-semibold text-white bg-[#20aab6] shadow-[0_0_20px_rgba(32,170,182,0.25)] hover:shadow-[0_0_30px_rgba(32,170,182,0.35)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full relative overflow-hidden px-6 py-3 rounded-full text-[15px] font-semibold text-white bg-gradient-accent shadow-[0_0_20px_rgba(32,170,182,0.25)] hover:shadow-[0_0_30px_rgba(32,170,182,0.35)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">

@@ -40,7 +40,7 @@ export default function StepProgress({ steps, currentStep }: StepProgressProps) 
               <div
                 className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all ${
                   isCompleted
-                    ? "bg-[#20aab6] text-white"
+                    ? "bg-gradient-accent text-white"
                     : isCurrent
                     ? "bg-[#20aab6]/15 text-[#20aab6] border border-[#20aab6]/40"
                     : "bg-white/[0.04] text-white/20 border border-white/[0.08]"

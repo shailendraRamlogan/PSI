@@ -74,7 +74,7 @@ html {
 body {
   background: var(--color-bg);
   color: var(--color-text);
-  overflow-x: hidden;
+  /* overflow-x: hidden removed — was preventing table overflow-x-auto from scrolling */
 }
 
 /* Custom scrollbar */
@@ -107,10 +107,10 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Glow button */
+/* Glow button (gradient) */
 .btn-glow {
   position: relative;
-  background: #20aab6;
+  background: linear-gradient(135deg, #20aab6, #114B5F);
   transition: all 0.3s ease;
 }
 
@@ -119,7 +119,7 @@ body {
   position: absolute;
   inset: -1px;
   border-radius: inherit;
-  background: #20aab6;
+  background: linear-gradient(135deg, #20aab6, #114B5F);
   opacity: 0;
   filter: blur(12px);
   transition: opacity 0.3s ease;
@@ -133,6 +133,15 @@ body {
 .btn-glow:hover {
   transform: translateY(-1px);
   box-shadow: 0 8px 30px rgba(32, 170, 182, 0.3);
+}
+
+/* Accent gradient utility — use instead of flat bg-[#20aab6] on buttons/CTAs */
+.bg-gradient-accent {
+  background: linear-gradient(135deg, #20aab6, #114B5F);
+}
+
+.bg-gradient-accent-left {
+  background: linear-gradient(to right, #20aab6, #114B5F);
 }
 
 /* Outline button */

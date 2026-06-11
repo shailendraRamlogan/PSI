@@ -59,10 +59,7 @@ function VerifyEmailContent() {
       className="relative z-10 text-center max-w-[400px] px-6"
     >
       <Link href="/" className="inline-flex items-center gap-2 mb-8">
-        <div className="w-9 h-9 rounded-lg bg-[#20aab6] flex items-center justify-center font-bold text-white text-sm">
-          P
-        </div>
-        <span className="text-white font-semibold text-lg tracking-wide">PSI</span>
+        <img src="/images/psi-logo-nav.png" alt="PSI" className="h-9 w-auto" />
       </Link>
 
       {status === "loading" && (

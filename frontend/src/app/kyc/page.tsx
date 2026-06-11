@@ -31,10 +31,7 @@ export default function KYCPage() {
       {/* Top bar */}
       <div className="border-b border-white/[0.06] bg-[#0a0b14]">
         <div className="max-w-3xl mx-auto px-6 h-14 flex items-center gap-3">
-          <div className="w-7 h-7 rounded-lg bg-[#20aab6] flex items-center justify-center font-bold text-white text-[10px]">
-            P
-          </div>
-          <span className="text-sm font-semibold tracking-wide">PSI</span>
+          <img src="/images/psi-logo-nav.png" alt="PSI" className="h-7 w-auto" />
           <span className="text-white/20 text-sm mx-2">|</span>
           <span className="text-sm text-white/40">
             {user.role === "business" ? "Business Verification" : "Identity Verification"}

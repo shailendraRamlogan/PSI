@@ -19,10 +19,17 @@ interface BalanceState {
   USDT: number;
 }
 
-const CURRENCY_CONFIG: Record<CurrencyKey, { label: string; symbol: string; gradient: string }> = {
-  BSD: { label: "Local Fiat (BSD)", symbol: "$", gradient: "bg-[#20aab6]/10" },
-  USD: { label: "US Dollar (USD)", symbol: "$", gradient: "bg-[#20aab6]/10" },
-  USDT: { label: "Tether (USDT)", symbol: "₮", gradient: "bg-[#20aab6]/10" },
+const CURRENCY_CONFIG: Record<CurrencyKey, {
+  label: string;
+  symbol: string;
+  gradient: string;
+  iconBg: string;
+  iconPath: string;
+  growth: string;
+}> = {
+  BSD:  { label: "Local Fiat (BSD)", symbol: "$", gradient: "bg-[#20aab6]/10", iconBg: "bg-blue-500", iconPath: "M2 21h20M2 21V8l7-5 5 5 8-4v17", growth: "+12.5%" },
+  USD:  { label: "US Dollar (USD)", symbol: "$", gradient: "bg-[#20aab6]/10", iconBg: "bg-teal-500", iconPath: "M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6", growth: "+8.2%" },
+  USDT: { label: "Tether (USDT)", symbol: "₮", gradient: "bg-[#20aab6]/10", iconBg: "bg-emerald-500", iconPath: "m23 6-9.5 9.5-5-5L1 18", growth: "+3.1%" },
 };
 
 const CURRENCY_KEYS: CurrencyKey[] = ["BSD", "USD", "USDT"];
@@ -109,7 +116,7 @@ function BalanceCard({
 
   return (
     <div
-      className={`rounded-xl ${config.gradient} border border-white/[0.04] p-3 sm:p-4 transition-shadow duration-600`}
+      className={`rounded-xl ${config.gradient} border border-white/[0.04] p-3 sm:p-4 transition-shadow duration-600 relative`}
       style={{
         boxShadow: pulseColor
           ? `0 0 12px ${pulseColor}`
@@ -117,12 +124,22 @@ function BalanceCard({
         transition: "box-shadow 600ms ease-out",
       }}
     >
-      <div className="flex items-center justify-between mb-2">
+      {/* Icon badge top-left */}
+      <div className={`absolute top-2.5 left-2.5 w-6 h-6 rounded-lg ${config.iconBg} flex items-center justify-center`}>
+        <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d={config.iconPath} />
+        </svg>
+      </div>
+      {/* Growth badge top-right */}
+      <div className="absolute top-2.5 right-2.5 px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[9px] font-semibold">
+        {config.growth}
+      </div>
+      <div className="mt-7 mb-1">
         <span className="text-[10px] sm:text-xs text-white/40 font-medium">
           {config.label}
         </span>
       </div>
-      <p className="text-sm sm:text-base font-bold text-white mt-1">
+      <p className="text-sm sm:text-base font-bold text-white mt-0.5">
         {formatValue(config.symbol, displayValue)}
       </p>
     </div>
@@ -137,7 +154,7 @@ function DashboardMockup() {
   const [balances, setBalances] = useState<BalanceState>({
     BSD: 12450,
     USD: 9823.45,
-    USDT: 7500,
+    USDT: 15250,
   });
 
   // Pulse state per currency — holds the glow color or null
@@ -222,7 +239,7 @@ function DashboardMockup() {
     { id: 4, type: "USD → USDT Conversion", ref: "TXN-004", amount: "-$500.00", status: "completed" },
   ];
 
-  const INITIAL_BALANCES: BalanceState = { BSD: 12450, USD: 9823.45, USDT: 7500 };
+  const INITIAL_BALANCES: BalanceState = { BSD: 12450, USD: 9823.45, USDT: 15250 };
   const INITIAL_TOTAL = INITIAL_BALANCES.BSD + INITIAL_BALANCES.USD + INITIAL_BALANCES.USDT; // 29773.45
 
   const [liveTransactions, setLiveTransactions] = useState<LiveTransaction[]>(INITIAL_TRANSACTIONS);
@@ -516,17 +533,24 @@ function DashboardMockup() {
             </div>
 
             {/* Action buttons */}
-            <div className="flex gap-2 mb-5">
-              {["Deposit", "Convert", "Send", "History"].map((action) => (
+            <div className="grid grid-cols-4 gap-3 mb-5">
+              {([
+                { label: "Deposit", icon: "M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3", primary: true },
+                { label: "Convert", icon: "m23 6-9.5 9.5-5-5L1 18", primary: false },
+                { label: "Send", icon: "M7 7h10M7 17h10M12 7v10M22 7l-5-5M22 7l-5 5M2 17l5 5M2 17l5-5", primary: false },
+                { label: "History", icon: "M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0z", primary: false },
+              ] as const).map(({ label, icon, primary }) => (
                 <button
-                  key={action}
-                  className={`px-3 sm:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-colors ${
-                    action === "Deposit"
-                      ? "bg-[#20aab6] text-white"
+                  key={label}
+                  className={`w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-colors ${
+                    primary
+                      ? "bg-gradient-accent text-white"
                       : "bg-white/[0.04] text-white/50 hover:text-white/70 border border-white/[0.04]"
                   }`}
                 >
-                  {action}
+                  <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d={icon} />\n                  </svg>
+                  <span className="truncate">{label}</span>
                 </button>
               ))}
             </div>
@@ -539,7 +563,19 @@ function DashboardMockup() {
                 </p>
               </div>
               <div ref={txListRef}>
-              {liveTransactions.map((tx) => (
+              {liveTransactions.map((tx) => {
+                const isConversion = /conversion|convert/i.test(tx.type);
+                const isPending = tx.status === "pending";
+                const isPositive = tx.amount.startsWith("+") && !isConversion;
+                const iconBadge = isPending
+                  ? { bg: "bg-amber-500", path: "M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" }
+                  : isConversion
+                    ? { bg: "bg-blue-500", path: "m23 6-9.5 9.5-5-5L1 18" }
+                    : isPositive
+                      ? { bg: "bg-emerald-500", path: "M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" }
+                      : { bg: "bg-red-500", path: "M7 7h10M7 17h10M12 7v10M22 7l-5-5M22 7l-5 5M2 17l5 5M2 17l5-5" };
+
+                return (
                 <div
                   key={tx.id}
                   data-tx-row
@@ -554,18 +590,25 @@ function DashboardMockup() {
                     transition: tx.exiting && !prefersReducedMotion
                       ? "opacity 300ms ease-out, transform 300ms ease-out"
                       : tx.entering && !prefersReducedMotion
-                        ? undefined // use animation keyframe instead
+                        ? undefined
                         : undefined,
                     animation: tx.entering && !prefersReducedMotion ? "txEnter 400ms ease-out forwards" : undefined,
                   }}
                 >
-                  <div>
-                    <p className="text-[10px] sm:text-xs text-white/70 font-medium">
-                      {tx.type}
-                    </p>
-                    <p className="text-[9px] sm:text-[10px] text-white/25">
-                      {tx.ref}
-                    </p>
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-7 h-7 rounded-lg ${iconBadge.bg} flex items-center justify-center flex-shrink-0`}>
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                        <path d={iconBadge.path} />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-[10px] sm:text-xs text-white/70 font-medium">
+                        {tx.type}
+                      </p>
+                      <p className="text-[9px] sm:text-[10px] text-white/25">
+                        {tx.ref}
+                      </p>
+                    </div>
                   </div>
                   <div className="text-right">
                     <p
@@ -588,7 +631,8 @@ function DashboardMockup() {
                     </p>
                   </div>
                 </div>
-              ))}
+                );
+              })}
               </div>
             </div>
           </div>

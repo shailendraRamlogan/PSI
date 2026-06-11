@@ -5,12 +5,6 @@ import { motion, useInView } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useHeadingReveal } from "@/lib/section-choreography";
-import dynamic from "next/dynamic";
-
-const ResortBuildingCanvas = dynamic(() => import("@/components/three/ResortBuildingCanvas"), {
-  ssr: false,
-  loading: () => null,
-});
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -138,79 +132,8 @@ function ResortScene() {
   return (
     <div data-scene-wrapper className="relative w-full aspect-[16/6.5] sm:aspect-[16/5.5] min-h-[380px] sm:min-h-[460px] overflow-hidden rounded-2xl">
 
-      {/* L0: Sky — premium sunset */}
-      <div className="absolute inset-0" style={{
-        background: "linear-gradient(to bottom, #f59a4f 0%, #c4603a 25%, #4a1a3a 50%, #1a0a2e 75%, #0a0a1a 100%)",
-      }} />
-
-      {/* Stars */}
-      {[
-        { t: 3, l: 6, s: 1.3 }, { t: 6, l: 18, s: 0.7 }, { t: 2, l: 30, s: 1 },
-        { t: 8, l: 44, s: 0.5 }, { t: 4, l: 58, s: 0.9 }, { t: 1, l: 72, s: 0.6 },
-        { t: 7, l: 85, s: 1 }, { t: 10, l: 12, s: 0.4 }, { t: 5, l: 40, s: 0.8 },
-        { t: 9, l: 65, s: 0.5 }, { t: 11, l: 80, s: 0.7 }, { t: 3, l: 50, s: 0.6 },
-      ].map((star, i) => (
-        <div key={i} className="absolute rounded-full bg-white" style={{
-          top: `${star.t}%`, left: `${star.l}%`, width: star.s, height: star.s,
-          animation: `starTwinkle ${3 + i * 0.4}s ease-in-out infinite`, animationDelay: `${i * 0.2}s`,
-        }} />
-      ))}
-
-      {/* L1: Sun + glow */}
-      <div className="absolute bottom-[28%] left-1/2 -translate-x-1/2">
-        <div className="absolute -inset-36 sm:-inset-52 rounded-full bg-[#e8a045]/[0.04] blur-[60px]" />
-        <div className="absolute -inset-20 sm:-inset-30 rounded-full bg-[#d47a35]/[0.08] blur-[35px]" />
-        <div className="absolute -inset-10 sm:-inset-16 rounded-full bg-[#f0c060]/[0.1] blur-[20px]" />
-        <div className="relative w-12 h-12 sm:w-18 sm:h-18 rounded-full bg-gradient-to-t from-[#c45a25] via-[#e8a045] to-[#f5d070] shadow-[0_0_40px_rgba(232,160,69,0.35)]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250px] sm:w-[400px] h-[1px] bg-gradient-to-r from-transparent via-[#e8a045]/15 to-transparent" />
-      </div>
-
-      {/* L2: Clouds */}
-      <div className="absolute top-[8%] left-[0%] w-48 sm:w-80 h-10 sm:h-14 bg-gradient-to-r from-transparent via-white/[0.02] to-transparent rounded-full blur-2xl" style={{ animation: "cloudDrift 50s linear infinite" }} />
-      <div className="absolute top-[16%] right-[0%] w-40 sm:w-64 h-8 sm:h-12 bg-gradient-to-r from-transparent via-white/[0.015] to-transparent rounded-full blur-2xl" style={{ animation: "cloudDrift 40s linear infinite reverse" }} />
-
-      {/* L3: Mountains */}
-      <div className="absolute bottom-[34%] left-0 right-0 h-[10%] z-[2]">
-        <svg className="w-full h-full" viewBox="0 0 1600 100" preserveAspectRatio="none" fill="none">
-          <path d="M0 100 L120 60 L240 75 L400 30 L560 55 L680 20 L840 45 L1000 15 L1160 40 L1320 55 L1480 22 L1600 60 L1600 100Z" fill="rgba(10,8,20,0.5)" />
-          <path d="M0 100 L160 65 L320 80 L500 45 L660 65 L820 35 L980 58 L1140 42 L1340 60 L1500 38 L1600 70 L1600 100Z" fill="rgba(15,10,25,0.35)" />
-        </svg>
-      </div>
-
-      {/* L4: Ocean */}
-      <div className="absolute bottom-0 left-0 right-0 h-[35%] z-[3]">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#182840]/80 via-[#0f1a2a]/90 to-[#080e18]" />
-        {[0, 1, 2, 3, 4].map((i) => (
-          <div key={i} className="absolute h-[1px]" style={{
-            top: `${5 + i * 15}%`, left: "5%", right: "5%",
-            background: `linear-gradient(90deg, transparent, rgba(255,200,100,${0.1 - i * 0.012}), transparent)`,
-            animation: `shimmerLine ${5 + i * 1.5}s ease-in-out infinite`,
-            animationDelay: `${i * 0.6}s`,
-          }} />
-        ))}
-        <div className="absolute top-[2%] left-1/2 -translate-x-1/2 w-14 sm:w-20 h-[35%] bg-gradient-to-b from-[#e8a045]/12 to-transparent blur-sm rounded-full" style={{ animation: "reflPulse 4s ease-in-out infinite" }} />
-        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" style={{ animation: "reflPulse 3s ease-in-out infinite" }} />
-      </div>
-
-      {/* L5: Beach */}
-      <div className="absolute bottom-0 left-0 right-0 h-[14%] z-[4]">
-        <div className="absolute inset-0 bg-gradient-to-t from-[#b89040]/20 via-[#c4a050]/10 to-transparent" />
-        <div className="absolute top-0 left-0 right-0 h-[25%] bg-gradient-to-b from-white/[0.03] to-transparent" />
-      </div>
-
-      {/* L6: Palms removed — now rendered in Three.js */}
-
-      {/* L7: Hotel Building */}
-      <div className="absolute inset-0 z-[6]" style={{ display: "flex", alignItems: "flex-end", width: "100%", height: "100%" }}>
-        {/* Horizon glow where building meets sky */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[120%] h-[30%] rounded-full pointer-events-none" style={{
-          background: "radial-gradient(ellipse at center bottom, #f59a4f 0%, transparent 70%)",
-          opacity: 0.3,
-          filter: "blur(30px)",
-        }} />
-        {/* ═══ 3D Resort Building (Three.js) ═══ */}
-        <ResortBuildingCanvas />
-      </div>
+      {/* ═══ Full Background Image ═══ */}
+      <img src="/resort-tokenization.png" alt="Resort tokenization" className="absolute inset-0 w-full h-full object-cover" draggable={false} />
 
       {/* Particles (8) */}
       {[

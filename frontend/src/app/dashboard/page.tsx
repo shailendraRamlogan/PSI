@@ -95,14 +95,16 @@ export default function DashboardPage() {
           </svg>
         </div>
         <h2 className="text-lg font-semibold text-text-secondary">
-          {kycStatus === "submitted" ? "Review in progress" : "Verification required"}
+          {kycStatus === "submitted" || kycStatus === "resubmitted"
+            ? "Verification pending"
+            : "Verification required"}
         </h2>
         <p className="text-sm text-text-faint mt-1">
-          {kycStatus === "submitted"
+          {kycStatus === "submitted" || kycStatus === "resubmitted"
             ? "Your documents are being reviewed. We'll notify you once the process is complete. This typically takes 1–3 business days."
             : "Please complete your identity verification to unlock all features."}
         </p>
-        {kycStatus !== "submitted" && (
+        {kycStatus !== "submitted" && kycStatus !== "resubmitted" && (
           <a href="/kyc" className="inline-block mt-5 px-6 py-2.5 rounded-full text-[14px] font-semibold text-white bg-accent hover:bg-accent-hover transition-colors">
             Start verification
           </a>

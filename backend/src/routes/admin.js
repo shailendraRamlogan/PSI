@@ -22,7 +22,7 @@ const adminOnly = (req, res, next) => {
 // GET /api/admin/kyc/queue
 router.get("/queue", authMiddleware, adminOnly, async (req, res) => {
   try {
-    const { status, user_id, page = "1", limit = "20" } = req.query;
+    const { status, user_id, resubmitted, page = "1", limit = "20" } = req.query;
     const pg = parseInt(page);
     const lm = parseInt(limit);
     const offset = (pg - 1) * lm;
@@ -34,6 +34,12 @@ router.get("/queue", authMiddleware, adminOnly, async (req, res) => {
     if (status && status !== "all") {
       whereClause += ` AND kyc_data->>'status' = $${params.length + 1}`;
       params.push(status);
+    }
+
+    // Handle frontend resubmitted filter tab
+    if (resubmitted === "true") {
+      whereClause += ` AND kyc_data->>'status' = $${params.length + 1}`;
+      params.push("resubmitted");
     }
 
     if (user_id) {
@@ -97,9 +103,171 @@ router.get("/:id", authMiddleware, adminOnly, async (req, res) => {
       submittedAt: u.kyc_data?.submittedAt || null,
       rejectionReason: u.kyc_data?.rejectionReason || null,
       kycData: u.kyc_data,
+      flagged_fields: u.kyc_data?.flagged_fields || null,
+      admin_notes: u.kyc_data?.admin_notes || null,
+      resubmission_count: u.kyc_data?.resubmission_count || 0,
+      previous_submission: u.kyc_data?.previous_submission || null,
     });
   } catch (err) {
     console.error("KYC detail error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Human-readable field name map
+const FIELD_LABELS = {
+  passport_front: "Passport (Front)",
+  passport_back: "Passport (Back)",
+  proof_of_address: "Proof of Address",
+  selfie: "Identity Selfie",
+  date_of_birth: "Date of Birth",
+  first_name: "First Name",
+  last_name: "Last Name",
+  nationality: "Nationality",
+  tax_id: "Tax ID / TIN",
+  phone: "Phone Number",
+  address_line1: "Address Line 1",
+  address_line2: "Address Line 2",
+  city: "City",
+  state: "State / Province",
+  postal_code: "Postal Code",
+  country: "Country",
+  company_name: "Company Name",
+  legalBusinessName: "Legal Business Name",
+  tradingName: "Trading Name",
+  registrationNumber: "Registration Number",
+  businessType: "Company Type",
+  incorporationDate: "Incorporation Date",
+  businessAddress: "Company Address",
+  jurisdiction: "Jurisdiction",
+  industry: "Industry",
+  certificateOfIncorporation: "Certificate of Incorporation",
+  articlesOfAssociation: "Articles of Association",
+  proofOfBusinessAddress: "Proof of Business Address",
+  shareholderRegister: "Shareholder Register",
+  sourceOfFundsDeclaration: "Source of Funds Declaration",
+  // Legacy / grouped labels
+  id_front: "ID Document (Front)",
+  id_back: "ID Document (Back)",
+  full_name: "Full Name",
+  phone_number: "Phone Number",
+  street_address: "Street Address",
+  state_province: "State / Province",
+  identityDocs: "Identity Documents",
+  personalInfo: "Personal Information",
+  addressDocs: "Address Documents",
+  businessInfo: "Business Information",
+  directors: "Directors",
+  documents: "Business Documents",
+};
+
+function fieldLabel(key) {
+  return FIELD_LABELS[key] || key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// POST /api/admin/kyc/:id/request-verification
+router.post("/:id/request-verification", authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { flagged_fields, notes } = req.body;
+
+    // Validate flagged_fields
+    if (!Array.isArray(flagged_fields) || flagged_fields.length === 0) {
+      return res.status(400).json({ error: "flagged_fields must be a non-empty array" });
+    }
+
+    // Validate notes
+    if (!notes || typeof notes !== "string" || notes.trim().length < 10) {
+      return res.status(400).json({ error: "Notes are required (minimum 10 characters)" });
+    }
+
+    const userResult = await pool.query(
+      "SELECT id, name, email, kyc_data FROM users WHERE id = $1",
+      [req.params.id]
+    );
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const user = userResult.rows[0];
+    const kycData = {
+      ...(user.kyc_data || {}),
+      status: "verification_requested",
+      flagged_fields,
+      admin_notes: notes.trim(),
+      reviewedAt: new Date().toISOString(),
+    };
+
+    await pool.query(
+      "UPDATE users SET kyc_data = $1, updated_at = NOW() WHERE id = $2",
+      [JSON.stringify(kycData), req.params.id]
+    );
+
+    // Write to audit_logs
+    await pool.query(
+      `INSERT INTO audit_logs (user_id, action, entity, entity_id, metadata, ip_address)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [req.params.id, "KYC_VERIFICATION_REQUESTED", "kyc_verification", req.params.id,
+       JSON.stringify({ flagged_fields, notes: notes.trim() }), req.ip || null]
+    );
+
+    // Send email to user
+    try {
+      const firstName = (user.name || "User").split(" ")[0];
+      const fieldBullets = flagged_fields
+        .map((f) => `<li style="color:rgba(255,255,255,0.6);font-size:14px;padding:4px 0;">${fieldLabel(f)}</li>`)
+        .join("");
+
+      await sendEmail({
+        to: user.email,
+        subject: "Action Required — Please Update Your KYC Submission",
+        html: `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#0d0f1a;font-family:system-ui,-apple-system,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;">
+    <tr><td style="padding:32px 24px;text-align:center;">
+      <div style="font-size:24px;font-weight:700;color:#20aab6;">PSI Platform</div>
+    </td></tr>
+    <tr><td style="padding:0 24px;">
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:32px;">
+        <p style="color:rgba(255,255,255,0.9);font-size:15px;margin:0 0 8px;">Hi ${firstName},</p>
+        <p style="color:rgba(255,255,255,0.6);font-size:14px;line-height:1.6;margin:0 0 20px;">Your identity verification submission requires some attention before we can proceed.</p>
+
+        <h3 style="color:rgba(255,255,255,0.8);font-size:14px;margin:0 0 12px;">Fields requiring your attention:</h3>
+        <ul style="margin:0 0 20px;padding-left:20px;">
+          ${fieldBullets}
+        </ul>
+
+        <h3 style="color:rgba(255,255,255,0.8);font-size:14px;margin:0 0 12px;">Notes from our team:</h3>
+        <blockquote style="margin:0 0 20px;padding:12px 16px;background:rgba(255,255,255,0.04);border-left:3px solid #20aab6;border-radius:0 8px 8px 0;">
+          <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:0;line-height:1.5;">${notes.trim()}</p>
+        </blockquote>
+
+        <div style="text-align:center;margin:24px 0;">
+          <a href="https://psi.ourea.tech/login" style="display:inline-block;padding:12px 32px;background:#20aab6;color:#fff;font-size:14px;font-weight:600;border-radius:999px;text-decoration:none;">Review My Submission</a>
+        </div>
+      </div>
+    </td></tr>
+    <tr><td style="padding:24px;text-align:center;">
+      <p style="color:rgba(255,255,255,0.2);font-size:12px;margin:0;">If you have questions, contact support</p>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+      });
+    } catch (emailErr) {
+      console.error("Failed to send KYC verification request email:", emailErr);
+    }
+
+    res.json({
+      message: "Verification request sent",
+      status: kycData.status,
+      flagged_fields: kycData.flagged_fields,
+      admin_notes: kycData.admin_notes,
+      kycData,
+    });
+  } catch (err) {
+    console.error("KYC verification request error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -255,22 +423,27 @@ router.get("/:id/export", authMiddleware, adminOnly, async (req, res) => {
       "Full Name     : " + user.name,
       "Email         : " + user.email,
       "Phone Number  : " + (pi.phoneNumber || "Not provided"),
-      "",
-      "--- Personal Information ---",
-      "Date of Birth : " + (pi.dateOfBirth || "Not provided"),
-      "Nationality   : " + (pi.nationality || "Not provided"),
-      "Tax ID        : " + (pi.taxId || "Not provided"),
-      "",
-      "--- Address ---",
-      "Street        : " + (addr.streetAddress || "Not provided"),
-      "City          : " + (addr.city || "Not provided"),
-      "State/Province: " + (addr.stateProvince || "Not provided"),
-      "Postal Code   : " + (addr.postalCode || "Not provided"),
-      "Country       : " + (addr.country || "Not provided"),
-      "",
-      "--- Identity Document ---",
-      "ID Type       : " + idTypeLabel,
     ];
+
+    if (!isKYB) {
+      lines.push(
+        "",
+        "--- Personal Information ---",
+        "Date of Birth : " + (pi.dateOfBirth || "Not provided"),
+        "Nationality   : " + (pi.nationality || "Not provided"),
+        "Tax ID        : " + (pi.taxId || "Not provided"),
+        "",
+        "--- Address ---",
+        "Street        : " + (addr.streetAddress || "Not provided"),
+        "City          : " + (addr.city || "Not provided"),
+        "State/Province: " + (addr.stateProvince || "Not provided"),
+        "Postal Code   : " + (addr.postalCode || "Not provided"),
+        "Country       : " + (addr.country || "Not provided"),
+        "",
+        "--- Identity Document ---",
+        "ID Type       : " + idTypeLabel
+      );
+    }
 
     if (isKYB) {
       lines.push(

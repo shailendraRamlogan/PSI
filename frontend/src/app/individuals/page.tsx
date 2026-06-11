@@ -97,12 +97,12 @@ export default function IndividualsPage() {
             animate="visible"
             className="mt-8 flex flex-wrap gap-3"
           >
-            <Link href="/get-started">
+            <Link href="/signup?type=individual">
               <motion.button
                 whileHover={{ scale: 1.04, y: -1 }}
                 whileTap={{ scale: 0.97 }}
                 className="relative overflow-hidden px-7 py-3 rounded-full text-[14px] font-semibold text-white flex items-center gap-2 group
-                  bg-[#20aab6]
+                  bg-gradient-accent
                   shadow-[0_0_20px_rgba(32,170,182,0.25),0_0_60px_rgba(32,170,182,0.1)]
                   hover:shadow-[0_0_30px_rgba(32,170,182,0.35),0_0_80px_rgba(32,170,182,0.15)]
                   transition-shadow duration-500"
@@ -110,7 +110,7 @@ export default function IndividualsPage() {
                 <span className="absolute inset-0 rounded-full bg-white/[0.08] backdrop-blur-sm border border-white/[0.1]" />
                 <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12" />
                 <span className="relative flex items-center gap-2">
-                  Get Started
+                  Register
                   <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
@@ -589,12 +589,12 @@ export default function IndividualsPage() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="mt-8"
           >
-            <Link href="/get-started">
+            <Link href="/signup?type=individual">
               <motion.button
                 whileHover={{ scale: 1.04, y: -1 }}
                 whileTap={{ scale: 0.97 }}
                 className="relative overflow-hidden px-8 py-3.5 rounded-full text-[15px] font-semibold text-white flex items-center gap-2 group mx-auto
-                  bg-[#20aab6]
+                  bg-gradient-accent
                   shadow-[0_0_20px_rgba(32,170,182,0.25),0_0_60px_rgba(32,170,182,0.1)]
                   hover:shadow-[0_0_30px_rgba(32,170,182,0.35),0_0_80px_rgba(32,170,182,0.15)]
                   transition-shadow duration-500"
@@ -602,7 +602,7 @@ export default function IndividualsPage() {
                 <span className="absolute inset-0 rounded-full bg-white/[0.08] backdrop-blur-sm border border-white/[0.1]" />
                 <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12" />
                 <span className="relative flex items-center gap-2">
-                  Create Free Account
+                  Register
                   <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>

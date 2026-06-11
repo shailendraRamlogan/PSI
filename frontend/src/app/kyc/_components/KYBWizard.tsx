@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth-store";
 import StepProgress from "./StepProgress";
@@ -31,9 +31,20 @@ interface Director {
   idFile: FileInfo | null;
 }
 
+interface VerificationRequest {
+  status: string;
+  flagged_fields: string[];
+  admin_notes: string;
+  submission_data: KybState;
+}
+
 interface KybState {
   step: number;
-  status: "pending" | "submitted" | "approved" | "rejected";
+  status: "pending" | "submitted" | "approved" | "rejected" | "verification_requested" | "resubmitted";
+  flagged_fields?: string[];
+  admin_notes?: string;
+  resubmission_count?: number;
+  previous_submission?: Record<string, unknown>;
   businessInfo: {
     legalBusinessName: string;
     tradingName: string;
@@ -81,11 +92,30 @@ const defaultKyb: KybState = {
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
+const ACCENT = "#20aab6";
+
 const inputCls =
   "w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 text-[14px] text-white placeholder:text-white/25 focus:outline-none focus:border-[#20aab6]/50 focus:ring-1 focus:ring-[#20aab6]/25 transition-colors";
 
 const inputErrorCls =
   "w-full bg-white/[0.04] border border-red-500/50 rounded-xl px-4 py-3 text-[14px] text-white placeholder:text-white/25 focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400/25 transition-colors";
+
+const inputFlaggedCls =
+  "w-full bg-white/[0.04] border border-red-500 rounded-xl px-4 py-3 text-[14px] text-white placeholder:text-white/25 focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400/20 transition-colors";
+
+const inputAcceptedCls =
+  "w-full bg-white/[0.04] border border-green-500/50 rounded-xl px-4 py-3 text-[14px] text-white placeholder:text-white/25 focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400/25 transition-colors disabled:opacity-70 disabled:cursor-not-allowed";
+
+function getInputCls(fieldName: string, hasError: boolean, isVR: boolean, flagged: string[]): string {
+  if (hasError) return inputErrorCls;
+  if (isVR && flagged.includes(fieldName)) return inputFlaggedCls;
+  if (isVR && !flagged.includes(fieldName)) return inputAcceptedCls;
+  return inputCls;
+}
+
+function isFieldDisabled(isVR: boolean, fieldName: string, flagged: string[]): boolean {
+  return isVR && !flagged.includes(fieldName);
+}
 
 const labelCls = "block text-[13px] text-white/60 mb-1.5";
 
@@ -101,8 +131,162 @@ const INDUSTRIES = [
   "Energy / Utilities", "Media / Entertainment", "Other",
 ];
 
+/* ═══════ Sub-components (file scope, not inside main component) ═══════ */
+
+function Field({ label, error, flagged, children }: { label: string; error?: string; flagged?: boolean; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className={labelCls}>{label}</label>
+      {flagged && <p className="text-red-400 text-xs mb-1">This field requires attention</p>}
+      {children}
+      {error && <p className="text-red-400 text-[11px] mt-1">{error}</p>}
+    </div>
+  );
+}
+
+function DocUpload({
+  label,
+  required,
+  file,
+  error,
+  onFile,
+  flagged,
+  accepted,
+}: {
+  label: string;
+  required: boolean;
+  file: FileInfo | null;
+  error?: string;
+  onFile: (f: File) => void;
+  flagged?: boolean;
+  accepted?: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (e.dataTransfer.files[0]) onFile(e.dataTransfer.files[0]);
+  };
+
+  const borderColor = flagged
+    ? "border-red-500/50"
+    : dragOver
+      ? "border-[#20aab6]/50 bg-[#20aab6]/5"
+      : error
+        ? "border-red-500/30"
+        : "border-white/[0.08] hover:border-[#20aab6]/20";
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-1.5">
+        <label className="text-[13px] text-white/60">{label}</label>
+        <span className={"text-[10px] px-1.5 py-0.5 rounded-full " + (required ? "bg-red-500/10 text-red-300/70" : "bg-white/[0.04] text-white/25")}>
+          {required ? "Required" : "Optional"}
+        </span>
+      </div>
+
+      {/* Accepted document preview */}
+      {accepted && file && !flagged ? (
+        <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-3 flex items-center gap-3 relative">
+          {file.preview && file.type !== "application/pdf" ? (
+            <div className="relative">
+              <img src={file.preview} alt="" className="w-10 h-10 rounded-lg object-cover border border-white/[0.1]" />
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </div>
+            </div>
+          ) : (
+            <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
+              <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-[12px] text-green-300 truncate">{file.name}</p>
+            <p className="text-[10px] text-green-400/60">Previously accepted - no action needed</p>
+          </div>
+        </div>
+      ) : !file ? (
+        <div
+          onClick={() => inputRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={handleDrop}
+          className={"border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all " + borderColor}
+        >
+          <svg className="w-6 h-6 text-white/15 mx-auto mb-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+          </svg>
+          <p className="text-[12px] text-white/30"><span className="text-[#20aab6]">Click to upload</span> or drag & drop</p>
+          <p className="text-[10px] text-white/15 mt-0.5">JPG, PNG or PDF - Max 20MB</p>
+          {flagged && <p className="text-[10px] text-red-400 mt-1">This document needs to be re-uploaded</p>}
+          <input ref={inputRef} type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) onFile(e.target.files[0]); }} />
+        </div>
+      ) : (
+        <div className="bg-white/[0.04] border border-white/[0.1] rounded-xl p-3 flex items-center gap-3">
+          {file.preview && file.type !== "application/pdf" ? (
+            <img src={file.preview} alt="" className="w-10 h-10 rounded-lg object-cover border border-white/[0.1]" />
+          ) : (
+            <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0">
+              <svg className="w-4 h-4 text-white/25" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-[12px] text-white/60 truncate">{file.name}</p>
+            <p className="text-[10px] text-white/25">{(file.size / 1024).toFixed(0)} KB</p>
+          </div>
+          <button onClick={() => onFile(null as unknown as File)} className="text-white/20 hover:text-red-400 transition-colors shrink-0">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+      )}
+      {error && <p className="text-red-400 text-[11px] mt-1">{error}</p>}
+    </div>
+  );
+}
+
+function ReviewSection({ title, onEdit, children }: { title: string; onEdit: () => void; children: React.ReactNode }) {
+  return (
+    <div className="bg-white/[0.02] border border-white/[0.08] rounded-xl overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+        <h3 className="text-[13px] font-semibold text-white/60 uppercase tracking-wide">{title}</h3>
+        <button onClick={onEdit} className="text-[12px] text-[#20aab6] hover:underline font-medium">Edit</button>
+      </div>
+      <div className="px-4 py-2 space-y-0.5">{children}</div>
+    </div>
+  );
+}
+
+function ReviewRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between items-center py-2">
+      <span className="text-[13px] text-white/35">{label}</span>
+      <span className="text-[13px] text-white/75">{value}</span>
+    </div>
+  );
+}
+
+function NavBtn({ onNext, onBack, saving, submitLabel, isSubmit }: { onNext: () => void; onBack?: () => void; saving: boolean; submitLabel?: string; isSubmit?: boolean }) {
+  return (
+    <div className="flex gap-3 mt-8">
+      {onBack && (
+        <button onClick={onBack} className="flex-1 px-6 py-3 rounded-full text-[14px] font-medium text-white/60 bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.06] transition-all">
+          Back
+        </button>
+      )}
+      <motion.button onClick={onNext} disabled={saving} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="flex-1 px-6 py-3 rounded-full text-[15px] font-semibold text-white bg-[#20aab6] shadow-[0_0_20px_rgba(32,170,182,0.25)] transition-all disabled:opacity-50">
+        {saving ? (isSubmit ? "Submitting\u2026" : "Saving\u2026") : (submitLabel || "Continue")}
+      </motion.button>
+    </div>
+  );
+}
+
+/* ═══════ Main Component ═══════ */
+
 export default function KYBWizard() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useAuth();
   const [kyb, setKyb] = useState<KybState>(defaultKyb);
   const [saving, setSaving] = useState(false);
@@ -113,41 +297,123 @@ export default function KYBWizard() {
   const [directorDraft, setDirectorDraft] = useState<Director>({
     fullName: "", dateOfBirth: "", nationality: "", ownershipPercent: "", role: "", idFile: null,
   });
+  const [vrStatus, setVrStatus] = useState<VerificationRequest | null>(null);
+  const [vrLoading, setVrLoading] = useState(true);
+  const hasUnsavedChanges = useRef(false);
 
+  const isVerificationRequested = kyb.status === "verification_requested";
+  const flaggedFields: string[] = vrStatus?.flagged_fields ?? [];
+
+  // Fetch full KYC data on mount to check for verification_requested
   useEffect(() => {
-    if (user?.kyc_data) {
-      const raw = user.kyc_data as unknown as Record<string, unknown>;
-      setKyb({
-        ...defaultKyb,
-        ...(raw as unknown as Partial<KybState>),
-        businessInfo: { ...defaultKyb.businessInfo, ...((raw.businessInfo ?? {}) as Record<string, string>) },
-        documents: { ...defaultKyb.documents, ...((raw.documents ?? {}) as Record<string, unknown>) },
-        directors: Array.isArray(raw.directors) ? (raw.directors as Director[]) : [],
-      });
-    }
-  }, [user]);
+    (async () => {
+      try {
+        const res = await fetch(API_BASE + "/auth/kyc", { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          const fullKyb = data.kyc as KybState;
+          if (fullKyb?.status === "verification_requested") {
+            setVrStatus({
+              status: fullKyb.status,
+              flagged_fields: fullKyb.flagged_fields ?? [],
+              admin_notes: fullKyb.admin_notes ?? "",
+              submission_data: fullKyb,
+            });
+            // Prefill form from submission_data — keep all values, don't clear flagged fields
+            const sd = fullKyb;
+            const prefilled: KybState = { ...defaultKyb, ...sd, step: 1 };
+            console.log("[KYB VR INIT] status:", prefilled.status, "flagged_fields:", prefilled.flagged_fields, "registrationNumber:", prefilled.businessInfo?.registrationNumber, "businessType:", prefilled.businessInfo?.businessType);
+            setKyb(prefilled);
+          } else if (fullKyb?.status === "resubmitted") {
+            setKyb({ ...defaultKyb, ...fullKyb, status: "submitted" });
+          } else if (user?.kyc_data) {
+            const raw = user.kyc_data as unknown as Record<string, unknown>;
+            setKyb({
+              ...defaultKyb,
+              ...(raw as unknown as Partial<KybState>),
+              businessInfo: { ...defaultKyb.businessInfo, ...((raw.businessInfo ?? {}) as Record<string, string>) },
+              documents: { ...defaultKyb.documents, ...((raw.documents ?? {}) as Record<string, unknown>) },
+              directors: Array.isArray(raw.directors) ? (raw.directors as Director[]) : [],
+            });
+          }
+        }
+      } catch (err) {
+        console.error("KYB status fetch error:", err);
+      } finally {
+        setVrLoading(false);
+      }
+    })();
+  }, []);
+
+  // Navigation guard for verification_requested
+  useEffect(() => {
+    if (!isVerificationRequested) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges.current) {
+        e.preventDefault();
+        e.returnValue = "You have unsaved changes. Your KYC needs to be resubmitted.";
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isVerificationRequested]);
+
+  // Track unsaved changes when user edits fields
+  useEffect(() => {
+    if (!isVerificationRequested) return;
+    hasUnsavedChanges.current = true;
+  }, [kyb, isVerificationRequested]);
 
   const save = useCallback(async (data: Partial<KybState>) => {
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/auth/kyc`, {
+      const res = await fetch(API_BASE + "/auth/kyc", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ kycData: data }),
       });
       const json = await res.json();
-      if (json.kyc) setKyb((prev) => ({ ...prev, ...json.kyc } as KybState));
+      if (json.kyc) {
+        if (isVerificationRequested) {
+          // Only update step in VR mode — don't overwrite user edits with stale server data
+          setKyb((prev) => ({ ...prev, step: (json.kyc as Record<string, unknown>).step as number ?? prev.step }));
+        } else {
+          setKyb((prev) => ({ ...prev, ...json.kyc } as KybState));
+        }
+      }
     } catch (err) {
       console.error("KYB save error:", err);
     } finally {
       setSaving(false);
     }
-  }, []);
+  }, [isVerificationRequested]);
 
-  const goTo = (step: number) => { setErrors({}); save({ step }); };
-  const next = () => { setErrors({}); if (!validateStep()) return; save({ step: Math.min(kyb.step + 1, 4) }); };
-  const back = () => { setErrors({}); save({ step: Math.max(kyb.step - 1, 1) }); };
+  const goTo = (step: number) => {
+    setErrors({});
+    if (isVerificationRequested) {
+      setKyb((p) => ({ ...p, step }));
+    } else {
+      save({ step });
+    }
+  };
+  const next = () => {
+    setErrors({});
+    if (!validateStep()) return;
+    if (isVerificationRequested) {
+      setKyb((p) => ({ ...p, step: Math.min(p.step + 1, 4) }));
+    } else {
+      save({ step: Math.min(kyb.step + 1, 4) });
+    }
+  };
+  const back = () => {
+    setErrors({});
+    if (isVerificationRequested) {
+      setKyb((p) => ({ ...p, step: Math.max(p.step - 1, 1) }));
+    } else {
+      save({ step: Math.max(kyb.step - 1, 1) });
+    }
+  };
 
   // ─── Validation ───
   const validateStep = (): boolean => {
@@ -177,8 +443,8 @@ export default function KYBWizard() {
         setErrors((p) => ({ ...p, [field]: "Max 20MB" }));
         return;
       }
-      if (!["image/jpeg", "image/png", "application/pdf"].includes(file.type)) {
-        setErrors((p) => ({ ...p, [field]: "JPG, PNG, or PDF only" }));
+      if (!["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"].includes(file.type)) {
+        setErrors((p) => ({ ...p, [field]: "Only images and PDF files are accepted" }));
         return;
       }
       const reader = new FileReader();
@@ -194,7 +460,7 @@ export default function KYBWizard() {
 
   const handleDirectorFile = useCallback((file: File) => {
     if (file.size > MAX_FILE_SIZE) return;
-    if (!["image/jpeg", "image/png", "application/pdf"].includes(file.type)) return;
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"].includes(file.type)) return;
     const reader = new FileReader();
     reader.onload = () => {
       setDirectorDraft((p) => ({
@@ -242,36 +508,63 @@ export default function KYBWizard() {
   const submit = async () => {
     setSubmitting(true);
     try {
-      const res = await fetch(`${API_BASE}/kyb/submit`, {
+      const endpoint = isVerificationRequested ? API_BASE + "/kyb/resubmit" : API_BASE + "/kyb/submit";
+      console.log("[KYB SUBMIT] endpoint:", endpoint);
+      console.log("[KYB SUBMIT] kyb.status:", kyb.status);
+      console.log("[KYB SUBMIT] isVerificationRequested:", isVerificationRequested);
+      console.log("[KYB SUBMIT] flaggedFields:", flaggedFields);
+      console.log("[KYB SUBMIT] kycData.businessInfo.registrationNumber:", kyb.businessInfo.registrationNumber);
+      console.log("[KYB SUBMIT] kycData.businessInfo.businessType:", kyb.businessInfo.businessType);
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ kycData: kyb }),
       });
-      if (res.ok) setKyb((p) => ({ ...p, status: "submitted" }));
+      const responseJson = await res.json();
+      console.log("[KYB SUBMIT] response status:", res.status);
+      console.log("[KYB SUBMIT] response body:", JSON.stringify(responseJson));
+      if (res.ok) {
+        hasUnsavedChanges.current = false;
+        setKyb((p) => ({ ...p, status: "resubmitted" }));
+      } else {
+        console.error("[KYB SUBMIT] server error:", responseJson);
+      }
     } catch (err) {
-      console.error("KYB submit error:", err);
+      console.error("[KYB SUBMIT] fetch error:", err);
     } finally {
       setSubmitting(false);
     }
   };
 
-  // ─── Under Review ───
-  if (kyb.status === "submitted") {
+  // ─── Loading ───
+  if (vrLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <span className="w-5 h-5 border-2 border-[#20aab6]/30 border-t-[#20aab6] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // ─── Under Review / Resubmission received ───
+  if (kyb.status === "submitted" || kyb.status === "resubmitted") {
+    const isResubmitted = kyb.status === "resubmitted";
     return (
       <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-16">
-        <div className="w-20 h-20 rounded-2xl bg-[#20aab6]/10 flex items-center justify-center mx-auto mb-6">
-          <svg className="w-10 h-10 text-[#20aab6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <div className={"w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 " + (isResubmitted ? "bg-emerald-500/10" : "bg-[#20aab6]/10")}>
+          <svg className={"w-10 h-10 " + (isResubmitted ? "text-emerald-400" : "text-[#20aab6]")} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <h2 className="text-2xl font-bold">Under Review</h2>
+        <h2 className="text-2xl font-bold">{isResubmitted ? "Resubmission Received" : "Under Review"}</h2>
         <p className="text-white/40 text-sm mt-3 max-w-sm mx-auto leading-relaxed">
-          Your business documents are being reviewed. You&apos;ll receive an email once verification is complete.
+          {isResubmitted
+            ? "Your updated submission has been received and is being reviewed by our team."
+            : "Your business documents are being reviewed. You will receive an email once verification is complete."}
         </p>
         <div className="mt-6 inline-flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-full px-5 py-2.5">
           <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-          <span className="text-[13px] text-white/50">Estimated review: 3–5 business days</span>
+          <span className="text-[13px] text-white/50">Estimated review: 3-5 business days</span>
         </div>
         <div className="mt-8">
           <button onClick={() => router.push("/dashboard")} className="px-8 py-3 rounded-full text-[14px] font-semibold text-white bg-[#20aab6] shadow-[0_0_20px_rgba(32,170,182,0.25)] hover:shadow-[0_0_30px_rgba(32,170,182,0.35)] transition-shadow">
@@ -282,8 +575,32 @@ export default function KYBWizard() {
     );
   }
 
+  // ─── Verification Requested Banner ───
+  const vrBanner = isVerificationRequested ? (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 mb-6"
+    >
+      <div className="flex items-start gap-3">
+        <svg className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+        </svg>
+        <div>
+          <h3 className="text-[14px] font-semibold text-amber-300">Your submission requires attention</h3>
+          {vrStatus?.admin_notes && (
+            <p className="text-[13px] text-amber-300/60 mt-1">{vrStatus.admin_notes}</p>
+          )}
+          <p className="text-[12px] text-amber-300/40 mt-1">The highlighted fields below need to be reviewed and corrected.</p>
+        </div>
+      </div>
+    </motion.div>
+  ) : null;
+
   return (
     <div>
+      {vrBanner}
+
       <StepProgress steps={STEPS} currentStep={kyb.step} />
 
       <AnimatePresence mode="wait">
@@ -295,26 +612,26 @@ export default function KYBWizard() {
 
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="Legal business name *" error={errors.legalBusinessName}>
-                  <input className={errors.legalBusinessName ? inputErrorCls : inputCls} value={kyb.businessInfo.legalBusinessName} onChange={(e) => setKyb((p) => ({ ...p, businessInfo: { ...p.businessInfo, legalBusinessName: e.target.value } }))} placeholder="Acme Corp Ltd." />
+                <Field label="Legal business name *" error={errors.legalBusinessName} flagged={flaggedFields.includes("legalBusinessName") && isVerificationRequested}>
+                  <input className={getInputCls("legalBusinessName", !!errors.legalBusinessName, isVerificationRequested, flaggedFields)} value={kyb.businessInfo.legalBusinessName} onChange={(e) => setKyb((p) => ({ ...p, businessInfo: { ...p.businessInfo, legalBusinessName: e.target.value } }))} placeholder="Acme Corp Ltd." disabled={isFieldDisabled(isVerificationRequested, "legalBusinessName", flaggedFields)} />
                 </Field>
-                <Field label="Trading name *" error={errors.tradingName}>
-                  <input className={errors.tradingName ? inputErrorCls : inputCls} value={kyb.businessInfo.tradingName} onChange={(e) => setKyb((p) => ({ ...p, businessInfo: { ...p.businessInfo, tradingName: e.target.value } }))} placeholder="Acme" />
-                </Field>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="Registration number *" error={errors.registrationNumber}>
-                  <input className={errors.registrationNumber ? inputErrorCls : inputCls} value={kyb.businessInfo.registrationNumber} onChange={(e) => setKyb((p) => ({ ...p, businessInfo: { ...p.businessInfo, registrationNumber: e.target.value } }))} placeholder="AB-12345" />
-                </Field>
-                <Field label="Incorporation date *" error={errors.incorporationDate}>
-                  <input type="date" className={errors.incorporationDate ? inputErrorCls : inputCls + " [color-scheme:dark]"} value={kyb.businessInfo.incorporationDate} onChange={(e) => setKyb((p) => ({ ...p, businessInfo: { ...p.businessInfo, incorporationDate: e.target.value } }))} />
+                <Field label="Trading name *" error={errors.tradingName} flagged={flaggedFields.includes("tradingName") && isVerificationRequested}>
+                  <input className={getInputCls("tradingName", !!errors.tradingName, isVerificationRequested, flaggedFields)} value={kyb.businessInfo.tradingName} onChange={(e) => setKyb((p) => ({ ...p, businessInfo: { ...p.businessInfo, tradingName: e.target.value } }))} placeholder="Acme" disabled={isFieldDisabled(isVerificationRequested, "tradingName", flaggedFields)} />
                 </Field>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="Business type *" error={errors.businessType}>
-                  <select className={errors.businessType ? inputErrorCls : inputCls + " [color-scheme:dark]"} value={kyb.businessInfo.businessType} onChange={(e) => setKyb((p) => ({ ...p, businessInfo: { ...p.businessInfo, businessType: e.target.value } }))}>
+                <Field label="Registration number *" error={errors.registrationNumber} flagged={flaggedFields.includes("registrationNumber") && isVerificationRequested}>
+                  <input className={getInputCls("registrationNumber", !!errors.registrationNumber, isVerificationRequested, flaggedFields)} value={kyb.businessInfo.registrationNumber} onChange={(e) => { console.log("[KYB FIELD CHANGE] registrationNumber:", e.target.value, "flagged:", flaggedFields.includes("registrationNumber"), "disabled:", isFieldDisabled(isVerificationRequested, "registrationNumber", flaggedFields), "isVR:", isVerificationRequested); setKyb((p) => ({ ...p, businessInfo: { ...p.businessInfo, registrationNumber: e.target.value } })); }} placeholder="AB-12345" disabled={isFieldDisabled(isVerificationRequested, "registrationNumber", flaggedFields)} />
+                </Field>
+                <Field label="Incorporation date *" error={errors.incorporationDate} flagged={flaggedFields.includes("incorporationDate") && isVerificationRequested}>
+                  <input type="date" className={getInputCls("incorporationDate", !!errors.incorporationDate, isVerificationRequested, flaggedFields) + " [color-scheme:dark]"} value={kyb.businessInfo.incorporationDate} onChange={(e) => setKyb((p) => ({ ...p, businessInfo: { ...p.businessInfo, incorporationDate: e.target.value } }))} disabled={isFieldDisabled(isVerificationRequested, "incorporationDate", flaggedFields)} />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Business type *" error={errors.businessType} flagged={flaggedFields.includes("businessType") && isVerificationRequested}>
+                  <select className={getInputCls("businessType", !!errors.businessType, isVerificationRequested, flaggedFields) + " [color-scheme:dark]"} value={kyb.businessInfo.businessType} onChange={(e) => setKyb((p) => ({ ...p, businessInfo: { ...p.businessInfo, businessType: e.target.value } }))} disabled={isFieldDisabled(isVerificationRequested, "businessType", flaggedFields)}>
                     <option value="" className="bg-[#0d0f1a]">Select type</option>
                     <option value="LLC" className="bg-[#0d0f1a]">LLC</option>
                     <option value="Corp" className="bg-[#0d0f1a]">Corporation</option>
@@ -322,24 +639,24 @@ export default function KYBWizard() {
                     <option value="Other" className="bg-[#0d0f1a]">Other</option>
                   </select>
                 </Field>
-                <Field label="Jurisdiction *" error={errors.jurisdiction}>
-                  <select className={errors.jurisdiction ? inputErrorCls : inputCls + " [color-scheme:dark]"} value={kyb.businessInfo.jurisdiction} onChange={(e) => setKyb((p) => ({ ...p, businessInfo: { ...p.businessInfo, jurisdiction: e.target.value } }))}>
+                <Field label="Jurisdiction *" error={errors.jurisdiction} flagged={flaggedFields.includes("jurisdiction") && isVerificationRequested}>
+                  <select className={getInputCls("jurisdiction", !!errors.jurisdiction, isVerificationRequested, flaggedFields) + " [color-scheme:dark]"} value={kyb.businessInfo.jurisdiction} onChange={(e) => setKyb((p) => ({ ...p, businessInfo: { ...p.businessInfo, jurisdiction: e.target.value } }))} disabled={isFieldDisabled(isVerificationRequested, "jurisdiction", flaggedFields)}>
                     <option value="" className="bg-[#0d0f1a]">Select jurisdiction</option>
                     {COUNTRIES.map((c) => { const [val, lbl] = c.split("|"); return <option key={val} value={val} className="bg-[#0d0f1a]">{lbl}</option>; })}
                   </select>
                 </Field>
               </div>
 
-              <Field label="Business address *" error={errors.businessAddress}>
-                <input className={errors.businessAddress ? inputErrorCls : inputCls} value={kyb.businessInfo.businessAddress} onChange={(e) => setKyb((p) => ({ ...p, businessInfo: { ...p.businessInfo, businessAddress: e.target.value } }))} placeholder="123 Commerce Blvd, Port of Spain" />
+              <Field label="Business address *" error={errors.businessAddress} flagged={flaggedFields.includes("businessAddress") && isVerificationRequested}>
+                <input className={getInputCls("businessAddress", !!errors.businessAddress, isVerificationRequested, flaggedFields)} value={kyb.businessInfo.businessAddress} onChange={(e) => setKyb((p) => ({ ...p, businessInfo: { ...p.businessInfo, businessAddress: e.target.value } }))} placeholder="123 Commerce Blvd, Port of Spain" disabled={isFieldDisabled(isVerificationRequested, "businessAddress", flaggedFields)} />
               </Field>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Website">
-                  <input className={inputCls} value={kyb.businessInfo.website} onChange={(e) => setKyb((p) => ({ ...p, businessInfo: { ...p.businessInfo, website: e.target.value } }))} placeholder="https://example.com" />
+                  <input className={getInputCls("website", false, isVerificationRequested, flaggedFields)} value={kyb.businessInfo.website} onChange={(e) => setKyb((p) => ({ ...p, businessInfo: { ...p.businessInfo, website: e.target.value } }))} placeholder="https://example.com" disabled={isFieldDisabled(isVerificationRequested, "website", flaggedFields)} />
                 </Field>
-                <Field label="Industry *" error={errors.industry}>
-                  <select className={errors.industry ? inputErrorCls : inputCls + " [color-scheme:dark]"} value={kyb.businessInfo.industry} onChange={(e) => setKyb((p) => ({ ...p, businessInfo: { ...p.businessInfo, industry: e.target.value } }))}>
+                <Field label="Industry *" error={errors.industry} flagged={flaggedFields.includes("industry") && isVerificationRequested}>
+                  <select className={getInputCls("industry", !!errors.industry, isVerificationRequested, flaggedFields) + " [color-scheme:dark]"} value={kyb.businessInfo.industry} onChange={(e) => setKyb((p) => ({ ...p, businessInfo: { ...p.businessInfo, industry: e.target.value } }))} disabled={isFieldDisabled(isVerificationRequested, "industry", flaggedFields)}>
                     <option value="" className="bg-[#0d0f1a]">Select industry</option>
                     {INDUSTRIES.map((i) => <option key={i} value={i} className="bg-[#0d0f1a]">{i}</option>)}
                   </select>
@@ -347,7 +664,7 @@ export default function KYBWizard() {
               </div>
             </div>
 
-            <Nav onNext={next} saving={saving} />
+            <NavBtn onNext={next} saving={saving} />
           </motion.div>
         )}
 
@@ -379,8 +696,8 @@ export default function KYBWizard() {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-[14px] font-medium">{d.fullName}</p>
-                      <p className="text-[12px] text-white/35">{d.role}{d.ownershipPercent ? ` • ${d.ownershipPercent}% ownership` : ""}</p>
-                      <p className="text-[11px] text-white/20">{d.nationality} • DOB: {d.dateOfBirth || "—"}</p>
+                      <p className="text-[12px] text-white/35">{d.role}{d.ownershipPercent ? ' · ' + d.ownershipPercent + '% ownership' : ''}</p>
+                      <p className="text-[11px] text-white/20">{d.nationality} · DOB: {d.dateOfBirth || '—'}</p>
                     </div>
                     <div className="flex gap-1 shrink-0">
                       <button onClick={() => editDirector(i)} className="p-1.5 rounded-lg hover:bg-white/[0.06] text-white/30 hover:text-[#20aab6] transition-colors">
@@ -458,7 +775,7 @@ export default function KYBWizard() {
                           className="border-2 border-dashed border-white/[0.08] rounded-xl p-4 text-center cursor-pointer hover:border-[#20aab6]/20 transition-colors"
                         >
                           <p className="text-[12px] text-white/30"><span className="text-[#20aab6]">Click to upload</span> or drag & drop</p>
-                          <p className="text-[10px] text-white/15 mt-0.5">JPG, PNG or PDF • Max 20MB</p>
+                          <p className="text-[10px] text-white/15 mt-0.5">JPG, PNG or PDF - Max 20MB</p>
                           <input id="director-id-upload" type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleDirectorFile(e.target.files[0]); }} />
                         </div>
                       ) : (
@@ -501,7 +818,7 @@ export default function KYBWizard() {
               </button>
             )}
 
-            <Nav onNext={next} onBack={back} saving={saving} />
+            <NavBtn onNext={next} onBack={back} saving={saving} />
           </motion.div>
         )}
 
@@ -512,14 +829,54 @@ export default function KYBWizard() {
             <p className="text-white/40 text-sm mb-6">Upload the required documents for verification.</p>
 
             <div className="space-y-4">
-              <DocUpload label="Certificate of Incorporation" required file={kyb.documents.certificateOfIncorporation} error={errors.certificateOfIncorporation} onFile={(f) => handleFile("certificateOfIncorporation", f)} />
-              <DocUpload label="Articles of Association" required file={kyb.documents.articlesOfAssociation} error={errors.articlesOfAssociation} onFile={(f) => handleFile("articlesOfAssociation", f)} />
-              <DocUpload label="Proof of Business Address" required file={kyb.documents.proofOfBusinessAddress} error={errors.proofOfBusinessAddress} onFile={(f) => handleFile("proofOfBusinessAddress", f)} />
-              <DocUpload label="Shareholder Register" required={false} file={kyb.documents.shareholderRegister} error={errors.shareholderRegister} onFile={(f) => handleFile("shareholderRegister", f)} />
-              <DocUpload label="Source of Funds Declaration" required={false} file={kyb.documents.sourceOfFundsDeclaration} error={errors.sourceOfFundsDeclaration} onFile={(f) => handleFile("sourceOfFundsDeclaration", f)} />
+              <DocUpload
+                label="Certificate of Incorporation"
+                required
+                file={kyb.documents.certificateOfIncorporation}
+                error={errors.certificateOfIncorporation}
+                onFile={(f) => handleFile("certificateOfIncorporation", f)}
+                flagged={flaggedFields.includes("certificateOfIncorporation") && isVerificationRequested}
+                accepted={!flaggedFields.includes("certificateOfIncorporation") && isVerificationRequested && !!kyb.documents.certificateOfIncorporation}
+              />
+              <DocUpload
+                label="Articles of Association"
+                required
+                file={kyb.documents.articlesOfAssociation}
+                error={errors.articlesOfAssociation}
+                onFile={(f) => handleFile("articlesOfAssociation", f)}
+                flagged={flaggedFields.includes("articlesOfAssociation") && isVerificationRequested}
+                accepted={!flaggedFields.includes("articlesOfAssociation") && isVerificationRequested && !!kyb.documents.articlesOfAssociation}
+              />
+              <DocUpload
+                label="Proof of Business Address"
+                required
+                file={kyb.documents.proofOfBusinessAddress}
+                error={errors.proofOfBusinessAddress}
+                onFile={(f) => handleFile("proofOfBusinessAddress", f)}
+                flagged={flaggedFields.includes("proofOfBusinessAddress") && isVerificationRequested}
+                accepted={!flaggedFields.includes("proofOfBusinessAddress") && isVerificationRequested && !!kyb.documents.proofOfBusinessAddress}
+              />
+              <DocUpload
+                label="Shareholder Register"
+                required={false}
+                file={kyb.documents.shareholderRegister}
+                error={errors.shareholderRegister}
+                onFile={(f) => handleFile("shareholderRegister", f)}
+                flagged={flaggedFields.includes("shareholderRegister") && isVerificationRequested}
+                accepted={!flaggedFields.includes("shareholderRegister") && isVerificationRequested && !!kyb.documents.shareholderRegister}
+              />
+              <DocUpload
+                label="Source of Funds Declaration"
+                required={false}
+                file={kyb.documents.sourceOfFundsDeclaration}
+                error={errors.sourceOfFundsDeclaration}
+                onFile={(f) => handleFile("sourceOfFundsDeclaration", f)}
+                flagged={flaggedFields.includes("sourceOfFundsDeclaration") && isVerificationRequested}
+                accepted={!flaggedFields.includes("sourceOfFundsDeclaration") && isVerificationRequested && !!kyb.documents.sourceOfFundsDeclaration}
+              />
             </div>
 
-            <Nav onNext={next} onBack={back} saving={saving} />
+            <NavBtn onNext={next} onBack={back} saving={saving} />
           </motion.div>
         )}
 
@@ -531,25 +888,25 @@ export default function KYBWizard() {
 
             <div className="space-y-4">
               <ReviewSection title="Business Information" onEdit={() => goTo(1)}>
-                <ReviewRow label="Legal name" value={kyb.businessInfo.legalBusinessName || "—"} />
-                <ReviewRow label="Trading name" value={kyb.businessInfo.tradingName || "—"} />
-                <ReviewRow label="Reg. #" value={kyb.businessInfo.registrationNumber || "—"} />
-                <ReviewRow label="Incorporation" value={kyb.businessInfo.incorporationDate || "—"} />
-                <ReviewRow label="Type" value={kyb.businessInfo.businessType || "—"} />
-                <ReviewRow label="Jurisdiction" value={kyb.businessInfo.jurisdiction || "—"} />
-                <ReviewRow label="Address" value={kyb.businessInfo.businessAddress || "—"} />
-                <ReviewRow label="Website" value={kyb.businessInfo.website || "—"} />
-                <ReviewRow label="Industry" value={kyb.businessInfo.industry || "—"} />
+                <ReviewRow label="Legal name" value={kyb.businessInfo.legalBusinessName || "\u2014"} />
+                <ReviewRow label="Trading name" value={kyb.businessInfo.tradingName || "\u2014"} />
+                <ReviewRow label="Reg. #" value={kyb.businessInfo.registrationNumber || "\u2014"} />
+                <ReviewRow label="Incorporation" value={kyb.businessInfo.incorporationDate || "\u2014"} />
+                <ReviewRow label="Type" value={kyb.businessInfo.businessType || "\u2014"} />
+                <ReviewRow label="Jurisdiction" value={kyb.businessInfo.jurisdiction || "\u2014"} />
+                <ReviewRow label="Address" value={kyb.businessInfo.businessAddress || "\u2014"} />
+                <ReviewRow label="Website" value={kyb.businessInfo.website || "\u2014"} />
+                <ReviewRow label="Industry" value={kyb.businessInfo.industry || "\u2014"} />
               </ReviewSection>
 
-              <ReviewSection title={`Directors (${kyb.directors.length})`} onEdit={() => goTo(2)}>
+              <ReviewSection title={"Directors (" + kyb.directors.length + ")"} onEdit={() => goTo(2)}>
                 {kyb.directors.length === 0 ? (
                   <p className="text-[13px] text-white/30 py-2">No directors added</p>
                 ) : (
                   kyb.directors.map((d, i) => (
                     <div key={i} className="flex justify-between items-center py-2">
                       <span className="text-[13px] text-white/35">{d.role}</span>
-                      <span className="text-[13px] text-white/75">{d.fullName}{d.ownershipPercent ? ` (${d.ownershipPercent}%)` : ""}</span>
+                      <span className="text-[13px] text-white/75">{d.fullName}{d.ownershipPercent ? " (" + d.ownershipPercent + "%)" : ""}</span>
                     </div>
                   ))
                 )}
@@ -566,7 +923,7 @@ export default function KYBWizard() {
 
             <div className="mt-6 bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
               <p className="text-[13px] text-amber-300/80 leading-relaxed">
-                By submitting, you confirm all information is accurate and documents are genuine. PSI will review your business within 3–5 business days.
+                By submitting, you confirm all information is accurate and documents are genuine. PSI will review your business within 3-5 business days.
               </p>
             </div>
 
@@ -575,131 +932,12 @@ export default function KYBWizard() {
                 Back
               </button>
               <motion.button onClick={submit} disabled={submitting} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="flex-1 px-6 py-3 rounded-full text-[15px] font-semibold text-white bg-[#20aab6] shadow-[0_0_20px_rgba(32,170,182,0.25)] transition-all disabled:opacity-50">
-                {submitting ? "Submitting…" : "Submit for Review"}
+                {submitting ? "Submitting\u2026" : (isVerificationRequested ? "Resubmit for Review" : "Submit for Review")}
               </motion.button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  );
-}
-
-/* ═══════ Sub-components ═══════ */
-
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className={labelCls}>{label}</label>
-      {children}
-      {error && <p className="text-red-400 text-[11px] mt-1">{error}</p>}
-    </div>
-  );
-}
-
-function DocUpload({
-  label,
-  required,
-  file,
-  error,
-  onFile,
-}: {
-  label: string;
-  required: boolean;
-  file: FileInfo | null;
-  error?: string;
-  onFile: (f: File) => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [dragOver, setDragOver] = useState(false);
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    if (e.dataTransfer.files[0]) onFile(e.dataTransfer.files[0]);
-  };
-
-  return (
-    <div>
-      <div className="flex items-center gap-2 mb-1.5">
-        <label className="text-[13px] text-white/60">{label}</label>
-        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${required ? "bg-red-500/10 text-red-300/70" : "bg-white/[0.04] text-white/25"}`}>
-          {required ? "Required" : "Optional"}
-        </span>
-      </div>
-
-      {!file ? (
-        <div
-          onClick={() => inputRef.current?.click()}
-          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={handleDrop}
-          className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${
-            dragOver ? "border-[#20aab6]/50 bg-[#20aab6]/5" : error ? "border-red-500/30" : "border-white/[0.08] hover:border-[#20aab6]/20"
-          }`}
-        >
-          <svg className="w-6 h-6 text-white/15 mx-auto mb-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-          </svg>
-          <p className="text-[12px] text-white/30"><span className="text-[#20aab6]">Click to upload</span> or drag & drop</p>
-          <p className="text-[10px] text-white/15 mt-0.5">JPG, PNG or PDF • Max 20MB</p>
-          <input ref={inputRef} type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={(e) => { if (e.target.files?.[0]) onFile(e.target.files[0]); }} />
-        </div>
-      ) : (
-        <div className="bg-white/[0.04] border border-white/[0.1] rounded-xl p-3 flex items-center gap-3">
-          {file.preview && file.type !== "application/pdf" ? (
-            <img src={file.preview} alt="" className="w-10 h-10 rounded-lg object-cover border border-white/[0.1]" />
-          ) : (
-            <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0">
-              <svg className="w-4 h-4 text-white/25" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <p className="text-[12px] text-white/60 truncate">{file.name}</p>
-            <p className="text-[10px] text-white/25">{(file.size / 1024).toFixed(0)} KB</p>
-          </div>
-          <button onClick={() => onFile(null as unknown as File)} className="text-white/20 hover:text-red-400 transition-colors shrink-0">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
-        </div>
-      )}
-      {error && <p className="text-red-400 text-[11px] mt-1">{error}</p>}
-    </div>
-  );
-}
-
-function ReviewSection({ title, onEdit, children }: { title: string; onEdit: () => void; children: React.ReactNode }) {
-  return (
-    <div className="bg-white/[0.02] border border-white/[0.08] rounded-xl overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
-        <h3 className="text-[13px] font-semibold text-white/60 uppercase tracking-wide">{title}</h3>
-        <button onClick={onEdit} className="text-[12px] text-[#20aab6] hover:underline font-medium">Edit</button>
-      </div>
-      <div className="px-4 py-2 space-y-0.5">{children}</div>
-    </div>
-  );
-}
-
-function ReviewRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between items-center py-2">
-      <span className="text-[13px] text-white/35">{label}</span>
-      <span className="text-[13px] text-white/75">{value}</span>
-    </div>
-  );
-}
-
-function Nav({ onNext, onBack, saving }: { onNext: () => void; onBack?: () => void; saving: boolean }) {
-  return (
-    <div className="flex gap-3 mt-8">
-      {onBack && (
-        <button onClick={onBack} className="flex-1 px-6 py-3 rounded-full text-[14px] font-medium text-white/60 bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.06] transition-all">
-          Back
-        </button>
-      )}
-      <motion.button onClick={onNext} disabled={saving} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="flex-1 px-6 py-3 rounded-full text-[15px] font-semibold text-white bg-[#20aab6] shadow-[0_0_20px_rgba(32,170,182,0.25)] transition-all disabled:opacity-50">
-        {saving ? "Saving…" : "Continue"}
-      </motion.button>
     </div>
   );
 }

@@ -82,10 +82,7 @@ export default function CheckEmailPage() {
         className="relative z-10 text-center max-w-[440px] px-6"
       >
         <Link href="/" className="inline-flex items-center gap-2 mb-8">
-          <div className="w-9 h-9 rounded-lg bg-[#20aab6] flex items-center justify-center font-bold text-white text-sm">
-            P
-          </div>
-          <span className="text-white font-semibold text-lg tracking-wide">PSI</span>
+          <img src="/images/psi-logo-nav.png" alt="PSI" className="h-9 w-auto" />
         </Link>
 
         {/* Email icon */}
@@ -114,7 +111,7 @@ export default function CheckEmailPage() {
           disabled={checking}
           whileHover={checking ? {} : { scale: 1.02, y: -1 }}
           whileTap={checking ? {} : { scale: 0.98 }}
-          className="mt-8 w-full relative overflow-hidden px-6 py-3 rounded-full text-[15px] font-semibold text-white bg-[#20aab6] shadow-[0_0_20px_rgba(32,170,182,0.25)] hover:shadow-[0_0_30px_rgba(32,170,182,0.35)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="mt-8 w-full relative overflow-hidden px-6 py-3 rounded-full text-[15px] font-semibold text-white bg-gradient-accent shadow-[0_0_20px_rgba(32,170,182,0.25)] hover:shadow-[0_0_30px_rgba(32,170,182,0.35)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {checking ? (
             <span className="flex items-center justify-center gap-2">
