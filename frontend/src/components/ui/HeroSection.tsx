@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -10,11 +9,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
-
-const HeroCanvas = dynamic(() => import("@/components/three/HeroCanvas"), {
-  ssr: false,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-}) as any;
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
@@ -136,58 +130,22 @@ const panels: PanelDef[] = [
 export default function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const gradientRefs = useRef<(HTMLDivElement | null)[]>([]);
-  // ─── Task 4: Use ref instead of state for scroll-driven globe rotation ───
-  const scrollProgressRef = useRef(0);
-  // State only for re-rendering the canvas — thresholded to avoid per-frame re-renders
-  const [scrollProgress, setScrollProgress] = useState(0);
 
   const setGradientRef = useCallback((el: HTMLDivElement | null, idx: number) => {
     if (el) gradientRefs.current[idx] = el;
   }, []);
 
   useEffect(() => {
-    if (!sectionRef.current || !contentRef.current || !canvasWrapperRef.current) return;
+    if (!sectionRef.current || !contentRef.current) return;
 
     const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
     const parallaxMult = isMobile ? 0.5 : 1;
 
     const ctx = gsap.context(() => {
-      // Track scroll progress for globe rotation — ref-based with thresholded state update (Task 4)
-      ScrollTrigger.create({
-        trigger: sectionRef.current,
-        start: "top top",
-        end: "bottom top",
-        scrub: 0.6,
-        invalidateOnRefresh: true,
-        onUpdate: (self) => {
-          const newProgress = self.progress;
-          scrollProgressRef.current = newProgress;
-          // Only trigger re-render if change exceeds threshold (avoids per-frame setState)
-          if (Math.abs(newProgress - scrollProgress) > 0.005) {
-            setScrollProgress(newProgress);
-          }
-        },
-      });
-
       // Parallax: text content moves at 0.8x
       gsap.to(contentRef.current, {
         y: 120 * parallaxMult,
-        ease: "none",
-        force3D: true,
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "bottom top",
-          scrub: 0.8,
-          invalidateOnRefresh: true,
-        },
-      });
-
-      // Parallax: globe/canvas moves at 0.3x
-      gsap.to(canvasWrapperRef.current, {
-        y: 40 * parallaxMult,
         ease: "none",
         force3D: true,
         scrollTrigger: {
@@ -300,10 +258,18 @@ export default function HeroSection() {
         <div className="absolute w-[200%] h-[1px] opacity-[0.04]" style={{ background: "linear-gradient(90deg, transparent, #20aab6, transparent)", top: "55%", animation: "streakMove2 16s ease-in-out infinite" }} />
       </div>
 
-      {/* 3D Canvas — globe */}
-      <div ref={canvasWrapperRef} className="absolute inset-0 z-[3] md:left-[20%] md:right-[-15%] opacity-35 md:opacity-95 scale-[1.2] md:scale-[1.35] origin-center md:origin-[55%_50%]"
-        style={{ willChange: "transform", backfaceVisibility: "hidden", transform: "translate3d(0, 0, 0)" }}>
-        <HeroCanvas scrollProgress={scrollProgress} />
+      {/* Video background */}
+      <div className="absolute inset-0 z-[2] overflow-hidden">
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          src="/Hero.mp4"
+        />
+        {/* Dark overlay so text stays readable */}
+        <div className="absolute inset-0 bg-[#07080F]/60" />
       </div>
 
       {/* Vignettes */}
